@@ -17,16 +17,18 @@ class App(metaclass=MetaSingleton):
         self.app_name = name if name else os.path.basename(__file__)
         self.storage_path = os.getcwd()
         self.conf_path = os.path.join(self.storage_path,
-                                      os.path.normpath("config/config.txt"))
+                                      os.path.normpath("config/config.ini"))
         self.conf = configparser.ConfigParser()
 
-        # TODO Should the config file been created or read in __init__?
         if not os.path.exists(self.conf_path):
-            self.conf["app"] = {"Name": self.app_name,
-                                "Storage": self.storage_path}
+            self.conf["app"] = {"name": self.app_name,
+                                "storage": self.storage_path}
             self.write_conf()
         else:
             self.read_conf()
+            self.app_name = str(self.conf.get("app", "name", fallback=self.app_name))
+            self.storage_path = os.path.normpath(self.conf.get("app", "storage",
+                                                               fallback=self.storage_path))
 
     def write_conf(self):
         with open(self.conf_path, 'w') as conf_file:
@@ -35,16 +37,3 @@ class App(metaclass=MetaSingleton):
     def read_conf(self):
         with open(self.conf_path) as conf_file:
             self.conf.read_file(conf_file)
-
-    def set_conf(self, key, value, section="app"):
-        """
-        Method for setting entries in the configuration of this App object
-        :param key: The key of a key-value pair inside the configuration dict
-        :param value: The value of a key-value pair inside the configuration dict
-        :param section: Optional for inserting into a new section, defaults to "App" if is omitted
-        """
-        section_conf = self.conf[str(section)]
-        section_conf[str(key)] = value
-
-    def get_conf(self, key, section="app"):
-        return self.conf[section][key]
