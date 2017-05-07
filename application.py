@@ -30,6 +30,12 @@ class App(metaclass=MetaSingleton):
             self.storage_path = os.path.normpath(self.conf.get("app", "storage",
                                                                fallback=self.storage_path))
 
+    def set(self, key, value):
+        self.conf.set("app", key, value)
+
+    def get(self, key):
+        return self.conf.get("app", key)
+
     def write_conf(self):
         with open(self.conf_path, 'w') as conf_file:
             self.conf.write(conf_file)
