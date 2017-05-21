@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
+import json
 from configparser import ConfigParser
 
 
@@ -48,3 +49,26 @@ class INImanager(ManagerBase):
 
         self._data = dict(self._config._sections)  # TODO: Find a less dirty way then to use private attributes
         self._data[self._default_section] = dict(self._config.defaults())
+
+
+class JSONmanager(ManagerBase):
+    def __init__(self, *args, **kwargs):
+        super(JSONmanager, self).__init__(*args, **kwargs)
+
+    def save(self):
+        if self._config_path:
+            with open(self._config_path, 'w') as file:
+                json.dump(self._data, file)
+        elif self._config_file:
+            json.dump(self._data, self._config_file)
+        else:
+            raise FileNotFoundError()
+
+    def load(self):
+        if self._config_path:
+            with open(self._config_path) as file:
+                self._data = json.load(file)
+        elif self._config_file:
+            self._data = json.load(self._config_file)
+        else:
+            raise FileNotFoundError()
