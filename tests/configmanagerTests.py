@@ -14,7 +14,7 @@ class TestINImanager(unittest.TestCase):
         Test for exspected failure when a non existing key is demanded through get().
         """
         conf_manager = INImanager()
-        self.assertRaises(configparser.NoOptionError, conf_manager.get, "NonExistent")
+        self.assertRaises(KeyError, conf_manager.get, "NonExistent")
 
     def test_set_get_key(self):
         """
