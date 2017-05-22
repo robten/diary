@@ -22,6 +22,12 @@ class ManagerBase:
         section = section if section else self._default_section
         return self._data[section][key]
 
+    def set_source(self, path=None, file=None):  # TODO: Add some validation for path & file
+        if path:
+            self._config_path = path
+        if file:
+            self._config_file = file
+
 
 class INImanager(ManagerBase):
     def __init__(self, *args, **kwargs):

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
+import os
 import unittest
 import configparser
 import json
@@ -26,6 +27,22 @@ class TestManagerBase(unittest.TestCase):
         conf_manger.set("Test", input_value)
         output_value = conf_manger.get("Test")
         self.assertEqual(input_value, output_value, "set() and get(): input and output don't match")
+
+    def test_set_source_for_path(self):
+        conf_manager = ManagerBase()
+        input_path = os.path.join(os.getcwd(), "input_test.ini")
+        conf_manager.set_source(path=input_path)
+        self.assertEqual(input_path,
+                         conf_manager._config_path,
+                         "test_source() did not set path correctly")
+
+    def test_set_source_for_file(self):
+        conf_manager = ManagerBase()
+        input_file = tempfile.TemporaryFile()
+        conf_manager.set_source(file=input_file)
+        self.assertEqual(input_file,
+                         conf_manager._config_file,
+                         "test_source() did not set file correctly")
 
 
 class TestINImanager(unittest.TestCase):
