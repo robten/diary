@@ -5,38 +5,41 @@ import unittest
 import configparser
 import json
 import tempfile
-from configmanager import INImanager, JSONmanager
+from configmanager import INImanager, JSONmanager, ManagerBase
 
 
-class TestINImanager(unittest.TestCase):
+class TestManagerBase(unittest.TestCase):
 
     def test_get_key_no_found_failure(self):
         """
-        Test for exspected failure when a non existing key is demanded through get().
+        Test for expected failure when a non existing key is demanded through get().
         """
-        conf_manager = INImanager()
+        conf_manager = ManagerBase()
         self.assertRaises(KeyError, conf_manager.get, "NonExistent")
 
     def test_set_get_key(self):
         """
         Test if set() and get() ar producing the same content for the same key.
         """
-        conf_manger = INImanager()
+        conf_manger = ManagerBase()
         input_value = "Testing"
         conf_manger.set("Test", input_value)
         output_value = conf_manger.get("Test")
         self.assertEqual(input_value, output_value, "set() and get(): input and output don't match")
 
+
+class TestINImanager(unittest.TestCase):
+
     def test_load_file_not_found_failure(self):
         """
-        Test for exspected failure when load() is called without setting a source path or file.
+        Test for expected failure when load() is called without setting a source path or file.
         """
         conf_manager = INImanager()
         self.assertRaises(FileNotFoundError, conf_manager.load)
 
     def test_save_file_not_found_failure(self):
         """
-        Test for exspected failure when save() is called without setting a source path or file.
+        Test for expected failure when save() is called without setting a source path or file.
         """
         conf_manager = INImanager()
         self.assertRaises(FileNotFoundError, conf_manager.save)
@@ -74,33 +77,16 @@ class TestINImanager(unittest.TestCase):
 
 class TestJSONmanager(unittest.TestCase):
 
-    def test_get_key_no_found_failure(self):
-        """
-        Test for exspected failure when a non existing key is demanded through get().
-        """
-        conf_manager = JSONmanager()
-        self.assertRaises(KeyError, conf_manager.get, "NonExistent")
-
-    def test_set_get_key(self):
-        """
-        Test if set() and get() ar producing the same content for the same key.
-        """
-        conf_manger = JSONmanager()
-        input_value = "Testing"
-        conf_manger.set("Test", input_value)
-        output_value = conf_manger.get("Test")
-        self.assertEqual(input_value, output_value, "set() and get(): input and output don't match")
-
     def test_load_file_not_found_failure(self):
         """
-        Test for exspected failure when load() is called without setting a source path or file.
+        Test for expected failure when load() is called without setting a source path or file.
         """
         conf_manager = JSONmanager()
         self.assertRaises(FileNotFoundError, conf_manager.load)
 
     def test_save_file_not_found_failure(self):
         """
-        Test for exspected failure when save() is called without setting a source path or file.
+        Test for expected failure when save() is called without setting a source path or file.
         """
         conf_manager = JSONmanager()
         self.assertRaises(FileNotFoundError, conf_manager.save)
