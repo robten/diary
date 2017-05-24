@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-import os
-import unittest
 import configparser
 import json
+import os
 import tempfile
-from configmanager import INImanager, JSONmanager, ManagerBase
+import unittest
+from diary.configmanager import INImanager, JSONmanager, ManagerBase
 
 
 class TestManagerBase(unittest.TestCase):

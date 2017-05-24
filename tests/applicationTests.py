@@ -2,7 +2,7 @@
 # coding: utf-8
 
 import unittest
-from application import App
+from diary.application import App
 
 
 class AppTest(unittest.TestCase):
