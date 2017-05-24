@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
-import configparser
 import os
 from utilities import MetaSingleton
+from diary.configmanager import INImanager
 
 
 class App(metaclass=MetaSingleton):
@@ -18,28 +18,13 @@ class App(metaclass=MetaSingleton):
         self.storage_path = os.getcwd()
         self.conf_path = os.path.join(self.storage_path,
                                       os.path.normpath("config/config.ini"))
-        self.conf = configparser.ConfigParser()
+        self.conf = INImanager(path=self.conf_path)
 
         if not os.path.exists(self.conf_path):
-            self.conf["app"] = {"name": self.app_name,
-                                "storage": self.storage_path}
-            self.write_conf()
+            self.conf.set("name", self.app_name, section="app")
+            self.conf.set("storage", self.storage_path, section="app")
+            self.conf.save()
         else:
-            self.read_conf()
-            self.app_name = str(self.conf.get("app", "name", fallback=self.app_name))
-            self.storage_path = os.path.normpath(self.conf.get("app", "storage",
-                                                               fallback=self.storage_path))
-
-    def set(self, key, value):
-        self.conf.set("app", key, value)
-
-    def get(self, key):
-        return self.conf.get("app", key)
-
-    def write_conf(self):
-        with open(self.conf_path, 'w') as conf_file:
-            self.conf.write(conf_file)
-
-    def read_conf(self):
-        with open(self.conf_path) as conf_file:
-            self.conf.read_file(conf_file)
+            self.conf.load()
+            self.app_name = str(self.conf.get("name", section="app"))
+            self.storage_path = os.path.normpath(self.conf.get("storage", section="app"))
