@@ -52,11 +52,11 @@ class TestManagerBase(unittest.TestCase):
 
     def test_set_source_for_file(self):
         conf_manager = ManagerBase()
-        input_file = tempfile.TemporaryFile()
-        conf_manager.set_source(file=input_file)
-        self.assertEqual(input_file,
-                         conf_manager._config_file,
-                         "test_source() did not set file correctly")
+        with tempfile.TemporaryFile() as input_file:
+            conf_manager.set_source(file=input_file)
+            self.assertEqual(input_file,
+                             conf_manager._config_file,
+                             "test_source() did not set file correctly")
 
 
 class TestINImanager(unittest.TestCase):
