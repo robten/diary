@@ -11,51 +11,48 @@ from diary.configmanager import INImanager, JSONmanager, ManagerBase
 
 class TestManagerBase(unittest.TestCase):
 
+    def setUp(self):
+        self.conf_manager = ManagerBase()
+
     def test_get_key_no_found_failure(self):
         """
         Test for expected failure when a non existing key is demanded through get().
         """
-        conf_manager = ManagerBase()
-        self.assertRaises(KeyError, conf_manager.get, "NonExistent")
+        self.assertRaises(KeyError, self.conf_manager.get, "NonExistent")
 
     def test_set_get_key(self):
         """
         Test if set() and get() ar producing the same content for the same key.
         """
-        conf_manger = ManagerBase()
         input_value = "Testing"
-        conf_manger.set("Test", input_value)
-        output_value = conf_manger.get("Test")
+        self.conf_manager.set("Test", input_value)
+        output_value = self.conf_manager.get("Test")
         self.assertEqual(input_value, output_value, "set() and get(): input and output don't match")
 
     def test_delete_key(self):
-        conf_manager = ManagerBase()
-        conf_manager.set("test_key", "test_value")
-        conf_manager.delete_key("test_key")
+        self.conf_manager.set("test_key", "test_value")
+        self.conf_manager.delete_key("test_key")
         with self.assertRaises(KeyError, msg="key didn't get deleted by delete_key()"):
-            conf_manager.get("test_key")
+            self.conf_manager.get("test_key")
 
     def test_delete_section(self):
-        conf_manager = ManagerBase()
-        conf_manager.set("test_key", "test_value", "test_section")
-        conf_manager.delete_section("test_section")
+        self.conf_manager.set("test_key", "test_value", "test_section")
+        self.conf_manager.delete_section("test_section")
         with self.assertRaises(KeyError, msg="section didn't get deleted by delete_section()"):
-            conf_manager.get("test_key", "test_section")
+            self.conf_manager.get("test_key", "test_section")
 
     def test_set_source_for_path(self):
-        conf_manager = ManagerBase()
         input_path = os.path.join(os.getcwd(), "input_test.ini")
-        conf_manager.set_source(path=input_path)
+        self.conf_manager.set_source(path=input_path)
         self.assertEqual(input_path,
-                         conf_manager._config_path,
+                         self.conf_manager._config_path,
                          "test_source() did not set path correctly")
 
     def test_set_source_for_file(self):
-        conf_manager = ManagerBase()
         with tempfile.TemporaryFile() as input_file:
-            conf_manager.set_source(file=input_file)
+            self.conf_manager.set_source(file=input_file)
             self.assertEqual(input_file,
-                             conf_manager._config_file,
+                             self.conf_manager._config_file,
                              "test_source() did not set file correctly")
 
 
