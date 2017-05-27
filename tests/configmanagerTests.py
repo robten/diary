@@ -28,6 +28,20 @@ class TestManagerBase(unittest.TestCase):
         output_value = conf_manger.get("Test")
         self.assertEqual(input_value, output_value, "set() and get(): input and output don't match")
 
+    def test_delete_key(self):
+        conf_manager = ManagerBase()
+        conf_manager.set("test_key", "test_value")
+        conf_manager.delete_key("test_key")
+        with self.assertRaises(KeyError, msg="key didn't get deleted by delete_key()"):
+            conf_manager.get("test_key")
+
+    def test_delete_section(self):
+        conf_manager = ManagerBase()
+        conf_manager.set("test_key", "test_value", "test_section")
+        conf_manager.delete_section("test_section")
+        with self.assertRaises(KeyError, msg="section didn't get deleted by delete_section()"):
+            conf_manager.get("test_key", "test_section")
+
     def test_set_source_for_path(self):
         conf_manager = ManagerBase()
         input_path = os.path.join(os.getcwd(), "input_test.ini")

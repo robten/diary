@@ -22,6 +22,13 @@ class ManagerBase:
         section = section if section else self._default_section
         return self._data[section][key]
 
+    def delete_key(self, key, section=None):
+        section = section if section else self._default_section
+        self._data[section].pop(key, None)
+
+    def delete_section(self, section):
+        self._data.pop(section)
+
     def set_source(self, path=None, file=None):  # TODO: Add some validation for path & file
         if path:
             self._config_path = path
