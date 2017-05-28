@@ -35,11 +35,21 @@ class TestManagerBase(unittest.TestCase):
         with self.assertRaises(KeyError, msg="key didn't get deleted by delete_key()"):
             self.conf_manager.get("test_key")
 
+    def test_delete_key_error(self):
+        self.conf_manager.set("test_key", "test_value")
+        with self.assertRaises(KeyError, msg="deleting a non existing key didn't raise a correct exeption."):
+            self.conf_manager.delete_key("wrong_key")
+
     def test_delete_section(self):
         self.conf_manager.set("test_key", "test_value", "test_section")
         self.conf_manager.delete_section("test_section")
         with self.assertRaises(KeyError, msg="section didn't get deleted by delete_section()"):
             self.conf_manager.get("test_key", "test_section")
+
+    def test_delete_section_error(self):
+        self.conf_manager.set("test_key", "test_value", "test_section")
+        with self.assertRaises(KeyError, msg="deleting a non existing section didn't raise a correct exeption."):
+            self.conf_manager.delete_section("wrong_section")
 
     def test_set_source_for_path(self):
         input_path = os.path.join(os.getcwd(), "input_test.ini")

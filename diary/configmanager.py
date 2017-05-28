@@ -24,7 +24,7 @@ class ManagerBase:
 
     def delete_key(self, key, section=None):
         section = section if section else self._default_section
-        self._data[section].pop(key, None)
+        self._data[section].pop(key)
 
     def delete_section(self, section):
         self._data.pop(section)
