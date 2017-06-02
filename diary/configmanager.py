@@ -35,6 +35,18 @@ class ManagerBase:
         if file:
             self._config_file = file
 
+    def save(self):
+        """
+        Saving the data of ManagerBase should be done by an overriding method in a subclass.
+        """
+        raise NotImplementedError()
+
+    def load(self):
+        """
+        Loading the data of ManagerBase should be done by an overriding method in a subclass.
+        """
+        raise NotImplementedError()
+
 
 class INImanager(ManagerBase):
     def __init__(self, *args, **kwargs):
