@@ -72,7 +72,8 @@ class INImanager(ManagerBase):
         else:
             raise FileNotFoundError()
 
-        self._data = dict(self._config._sections)  # TODO: Find a less dirty way then to use private attributes
+        # TODO: Find a less dirty way then to use private attributes
+        self._data = dict(self._config._sections)
         self._data[self._default_section] = dict(self._config.defaults())
 
 

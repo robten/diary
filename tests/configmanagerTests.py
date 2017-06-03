@@ -37,7 +37,8 @@ class TestManagerBase(unittest.TestCase):
 
     def test_delete_key_error(self):
         self.conf_manager.set("test_key", "test_value")
-        with self.assertRaises(KeyError, msg="deleting a non existing key didn't raise a correct exeption."):
+        with self.assertRaises(KeyError,
+                               msg="deleting a non existing key didn't raise a correct exeption."):
             self.conf_manager.delete_key("wrong_key")
 
     def test_delete_section(self):
@@ -48,7 +49,8 @@ class TestManagerBase(unittest.TestCase):
 
     def test_delete_section_error(self):
         self.conf_manager.set("test_key", "test_value", "test_section")
-        with self.assertRaises(KeyError, msg="deleting a non existing section didn't raise a correct exeption."):
+        with self.assertRaises(KeyError,
+                               msg="deleting a non existing section didn't raise correct exeption."):
             self.conf_manager.delete_section("wrong_section")
 
     def test_set_source_for_path(self):
