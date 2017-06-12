@@ -21,7 +21,13 @@ class App(metaclass=MetaSingleton):
         self._conf.load()
 
     def is_ready(self, component):
-        pass
+        attr = "_" + component
+        try:
+            result = self.__dict__[attr].ready()
+        except KeyError:
+            raise KeyError("No component by the name of '" + component + "'.")
+        else:
+            return result
 
     def setup_database(self, file=":memory:", user=None, password=None, url=None, db=None):
         pass
