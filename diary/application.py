@@ -30,7 +30,10 @@ class App(metaclass=MetaSingleton):
             return result
 
     def setup_database(self, file=":memory:", user=None, password=None, url=None, db=None):
-        pass
+        if user and password and url and db:
+            self._db.set(user=user, password=password, url=url, db=db)
+        else:
+            self._db.set(file=file)
 
     def setup_storage(self, location=None):
         pass

@@ -31,6 +31,19 @@ class AppTest(unittest.TestCase):
             self.app.is_ready("wrong_view")
         self.app._view.ready.assert_called_once_with()
 
+    def test_setup_database_for_mysql(self):
+        test_kwargs = {"user": "tester",
+                       "password": "testy",
+                       "url": "localhost",
+                       "db": "test"}
+        self.app.setup_database(**test_kwargs)
+        self.app._db.set.assert_called_with(**test_kwargs)
+
+    def test_setup_database_for_sqlite(self):
+        test_kwargs = {"file": "./config/test.db"}
+        self.app.setup_database(**test_kwargs)
+        self.app._db.set.assert_called_with(**test_kwargs)
+
 
 if __name__ == "__main__":
     unittest.main()
