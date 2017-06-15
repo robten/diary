@@ -35,6 +35,12 @@ class ManagerBase:
         if file:
             self._config_file = file
 
+    def ready(self):
+        if self._config_file or self._config_path:
+            return True
+        else:
+            return False
+
     def save(self):
         """
         Saving the data of ManagerBase should be done by an overriding method in a subclass.

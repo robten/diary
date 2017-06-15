@@ -67,6 +67,15 @@ class TestManagerBase(unittest.TestCase):
                              self.conf_manager._config_file,
                              "test_source() did not set file correctly")
 
+    def test_ready_when_set(self):
+        self.conf_manager.set_source(path="./config/test")
+        self.assertTrue(self.conf_manager.ready(),
+                        "ready() didn't return True when correctly set up.")
+
+    def test_ready_when_not_set(self):
+        self.assertFalse(self.conf_manager.ready(),
+                         "ready() didn't return False when not correctly set up.")
+
 
 class TestINImanager(unittest.TestCase):
 
