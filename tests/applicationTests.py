@@ -44,6 +44,11 @@ class AppTest(unittest.TestCase):
         self.app.setup_database(**test_kwargs)
         self.app._db.set.assert_called_with(**test_kwargs)
 
+    def test_file_storage(self):
+        test_kwargs = {"location": "./config/storage"}
+        self.app.setup_storage(**test_kwargs)
+        self.app._storage.set.assert_called_with(**test_kwargs)
+
 
 if __name__ == "__main__":
     unittest.main()

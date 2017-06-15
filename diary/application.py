@@ -36,7 +36,8 @@ class App(metaclass=MetaSingleton):
             self._db.set(file=file)
 
     def setup_storage(self, location=None):
-        pass
+        self._storage.set(location=location)
 
     def start(self):
+        #  TODO: Implement App.start() when all components are finished
         pass
