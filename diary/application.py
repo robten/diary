@@ -17,8 +17,10 @@ class App(metaclass=MetaSingleton):
         self._view = view_component
 
     def load_conf(self, path):
+        #  TODO: leave path optional if already set through component initializer
         self._conf.set_source(path=path)
         self._conf.load()
+        #  TODO: check if any components can be set initially with loaded config file
 
     def is_ready(self, component):
         attr = "_" + component
@@ -37,6 +39,9 @@ class App(metaclass=MetaSingleton):
 
     def setup_storage(self, location=None):
         self._storage.set(location=location)
+
+    def setup_view(self, **kwargs):
+        self._view.set(**kwargs)
 
     def start(self):
         #  TODO: Implement App.start() when all components are finished

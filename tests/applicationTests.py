@@ -44,10 +44,15 @@ class AppTest(unittest.TestCase):
         self.app.setup_database(**test_kwargs)
         self.app._db.set.assert_called_with(**test_kwargs)
 
-    def test_file_storage(self):
+    def test_setup_storage_for_file(self):
         test_kwargs = {"location": "./config/storage"}
         self.app.setup_storage(**test_kwargs)
         self.app._storage.set.assert_called_with(**test_kwargs)
+
+    def test_setup_view(self):
+        test_kwargs = {"geometry": (800,600)}
+        self.app.setup_view(**test_kwargs)
+        self.app._view.set.assert_called_with(**test_kwargs)
 
 
 if __name__ == "__main__":
