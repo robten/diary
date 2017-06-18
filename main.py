@@ -1,9 +1,20 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-from application import App
+from diary.application import App
+from diary.configmanager import INImanager
+from diary.database import SQLiteManager
+from diary.storage import FileManager
+from diary.views import TerminalView
 
 
-app = App(name="Diary")
-app.set_conf("Test", "Testing Test")
-
+app = App(conf_component=INImanager(),
+          db_component=SQLiteManager(),
+          storage_component=FileManager(),
+          view_component=TerminalView())
+app.load_conf("./config/config.ini")
+if not app.is_ready("database"):
+    app.setup_storage(location="./config/storage/")
+if not app.is_ready("storage"):
+    app.setup_database(file="./config/database.db")
+app.start()
