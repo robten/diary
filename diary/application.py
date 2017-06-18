@@ -16,10 +16,14 @@ class App(metaclass=MetaSingleton):
         self._storage = storage_component
         self._view = view_component
 
-    def load_conf(self, path):
-        #  TODO: leave path optional if already set through component initializer
-        self._conf.set_source(path=path)
-        self._conf.load()
+    def load_conf(self, path=None):
+        if path:
+            self._conf.set_source(path=path)
+            self._conf.load()
+        elif self._conf.ready():
+            self._conf.load()
+        else:
+            raise FileNotFoundError("path not set hence config can't load")
         #  TODO: check if any components can be set initially with loaded config file
 
     def is_ready(self, component):

@@ -14,11 +14,31 @@ class AppTest(unittest.TestCase):
                        storage_component=MagicMock(),
                        view_component=MagicMock())
 
-    def test_load_conf(self):
+    def test_load_conf_with_path(self):
         test_path = "./testdir/test.conf"
         self.app.load_conf(test_path)
-        self.app._conf.set_source.assert_called_once_with(path=test_path)
-        self.app._conf.load.assert_called_once_with()
+        self.app._conf.set_source.assert_called_with(path=test_path)
+        self.app._conf.load.assert_called_with()
+
+    def test_load_conf_unset_without_path(self):
+        """
+        Test if load_conf() without path argument raises the correct error when the
+        corresponding components ready() returns False (hence component is not set yet).
+        """
+        self.app._conf.ready.return_value = False
+        with self.assertRaises(FileNotFoundError,
+                               msg="there should be no file set hence non found"):
+            self.app.load_conf()
+
+    def test_load_conf_set_without_path(self):
+        """
+        Test if load_conf() without path argument calles only the components load()
+        without extra call to its set_source().
+        """
+        self.app._conf.ready.return_value = True
+        self.app.load_conf()
+        self.app._conf.set_source.assert_not_called()
+        self.app._conf.load.assert_called_with()
 
     def test_is_ready(self):
         self.app._view.ready.return_value = True
