@@ -4,7 +4,7 @@
 from os import path
 
 
-class StorageBase:
+class FileManager:
     def __init__(self, db_backend=None, compressed=False, root=None):
         self._db = db_backend
         self._compression = compressed
@@ -25,20 +25,12 @@ class StorageBase:
     def exists(self, item):
         raise NotImplementedError()
 
-    def store(self, item):
-        raise NotImplementedError()
+    def store(self, item,
+              name=None, location=None, ftype=None, date=None, hierachy=None):
+        pass
 
     def retrieve(self, item):
         raise NotImplementedError()
 
     def get_info(self, item):
         raise NotImplementedError()
-
-
-class FileManager(StorageBase):
-    def __init__(self, *args, **kwargs):
-        super(FileManager, self).__init__(*args, **kwargs)
-
-    def store(self, item,
-              name=None, location=None, ftype=None, date=None, hierachy=None):
-        pass
