@@ -22,7 +22,16 @@ class StorageBase:
     def ready(self):
         return self._root is not None
 
+    def exists(self, item):
+        raise NotImplementedError()
+
     def store(self, item):
+        raise NotImplementedError()
+
+    def retrieve(self, item):
+        raise NotImplementedError()
+
+    def get_info(self, item):
         raise NotImplementedError()
 
 
