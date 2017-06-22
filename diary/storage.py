@@ -5,7 +5,7 @@ from os import path
 
 
 class FileManager:
-    def __init__(self, backend=None, compressed=False, root=None):
+    def __init__(self, root=None, backend=None, compressed=False):
         self._db = backend
         self._compression = compressed
         if root and path.exists(path.normpath(root)):
@@ -13,17 +13,16 @@ class FileManager:
         else:
             self._root = None
 
-    def set_root(self, root):
-        if path.exists(path.normpath(root)):
-            self._root = root
-        else:
-            raise NotADirectoryError()
-        
-    def set_backend(self, db):
-        self._db = db
-        
-    def set_compressed(self, state):
-        self._compression = state
+    def set(self, root=None, backend=None, compressed=None):
+        if root:
+            if path.exists(path.normpath(root)):
+                self._root = root
+            else:
+                raise NotADirectoryError()
+        if backend:
+            self._db = backend
+        if compressed is not None:
+            self._compression = compressed
 
     def ready(self):
         return self._root is not None

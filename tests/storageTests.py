@@ -23,7 +23,7 @@ class FileManagerTest(unittest.TestCase):
         test = FileManager()
         self.assertIsNone(test._root,
                           msg="unset _root should be None")
-        test.set_root(test_root)
+        test.set(root=test_root)
         self.assertEqual(test._root, test_root,
                          msg="after set_root() member should match input")
 
@@ -34,7 +34,7 @@ class FileManagerTest(unittest.TestCase):
                           msg="unset _root should be None")
         with self.assertRaises(NotADirectoryError,
                                msg="set_root() didn't raise Error if root path is invalid"):
-            test.set_root(test_root)
+            test.set(root=test_root)
 
 
 if __name__ == "__main__":
