@@ -28,7 +28,7 @@ class FileManager:
         return self._root is not None
 
     def exists(self, item):
-        pass
+        return path.isfile(path.join(self._root, item))
 
     def store(self, item,
               name=None, location=None, ftype=None, date=None, hierachy=None):

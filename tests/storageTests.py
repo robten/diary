@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import unittest
+from unittest.mock import MagicMock, patch
 from os import path
 from diary.storage import FileManager
 
@@ -35,6 +36,32 @@ class FileManagerTest(unittest.TestCase):
         with self.assertRaises(NotADirectoryError,
                                msg="set_root() didn't raise Error if root path is invalid"):
             test.set(root=test_root)
+
+    def test_exists_nonexistent_item(self):
+        test_root = "./testroot"
+        test_file = "testfile"
+        test_path = path.normpath(path.join(test_root, test_file))
+        isfile_mock = MagicMock(return_value=False)
+        exists_mock = MagicMock(return_value=True)
+        with patch("os.path.isfile", isfile_mock), patch("os.path.exists", exists_mock):
+            test = FileManager(root=test_root)
+            self.assertIsNotNone(test.exists(test_file),
+                                 msg="exists() should return only True or False")
+            self.assertFalse(test.exists(test_file),
+                             msg="exists() should return False, when test_file was not created yet")
+        isfile_mock.assert_called_with(test_path)
+
+    def test_exists_existent_item(self):
+        test_root = "./testroot"
+        test_file = "testfile"
+        test_path = path.normpath(path.join(test_root, test_file))
+        isfile_mock = MagicMock(return_value=True)
+        exists_mock = MagicMock(return_value=True)
+        with patch("os.path.isfile", isfile_mock), patch("os.path.exists", exists_mock):
+            test = FileManager(root=test_root)
+            self.assertTrue(test.exists(test_file),
+                            msg="exists() should return True, when test_file was created")
+        isfile_mock.assert_called_with(test_path)
 
 
 if __name__ == "__main__":
