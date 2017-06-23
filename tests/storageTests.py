@@ -40,7 +40,7 @@ class FileManagerTest(unittest.TestCase):
     def test_exists_nonexistent_item(self):
         test_root = "./testroot"
         test_file = "testfile"
-        test_path = path.normpath(path.join(test_root, test_file))
+        test_path = path.abspath(path.join(test_root, test_file))
         isfile_mock = MagicMock(return_value=False)
         exists_mock = MagicMock(return_value=True)
         with patch("os.path.isfile", isfile_mock), patch("os.path.exists", exists_mock):
@@ -54,7 +54,7 @@ class FileManagerTest(unittest.TestCase):
     def test_exists_existent_item(self):
         test_root = "./testroot"
         test_file = "testfile"
-        test_path = path.normpath(path.join(test_root, test_file))
+        test_path = path.abspath(path.join(test_root, test_file))
         isfile_mock = MagicMock(return_value=True)
         exists_mock = MagicMock(return_value=True)
         with patch("os.path.isfile", isfile_mock), patch("os.path.exists", exists_mock):

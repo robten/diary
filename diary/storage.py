@@ -8,14 +8,14 @@ class FileManager:
     def __init__(self, root=None, backend=None, compressed=False):
         self._db = backend
         self._compression = compressed
-        if root and path.exists(path.normpath(root)):
-            self._root = path.normpath(root)
+        if root and path.exists(path.abspath(root)):
+            self._root = path.abspath(root)
         else:
             self._root = None
 
     def set(self, root=None, backend=None, compressed=None):
         if root:
-            if path.exists(path.normpath(root)):
+            if path.exists(path.abspath(root)):
                 self._root = root
             else:
                 raise NotADirectoryError()
