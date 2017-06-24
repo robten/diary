@@ -20,16 +20,16 @@ class FileManagerTest(unittest.TestCase):
                         msg="for a set FileManager ready() should return True")
 
     def test_set_root(self):
-        test_root = path.normpath("./")
+        test_root = "./"
         test = FileManager()
         self.assertIsNone(test._root,
                           msg="unset _root should be None")
         test.set(root=test_root)
-        self.assertEqual(test._root, test_root,
+        self.assertEqual(test._root, path.abspath(test_root),
                          msg="after set_root() member should match input")
 
     def test_set_root_fail_nonexisitent(self):
-        test_root = path.normpath("./nonexistent")
+        test_root = "./nonexistent"
         test = FileManager()
         self.assertIsNone(test._root,
                           msg="unset _root should be None")
