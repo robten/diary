@@ -16,7 +16,7 @@ class FileManager:
     def set(self, root=None, backend=None, compressed=None):
         if root:
             if path.exists(path.abspath(root)):
-                self._root = root
+                self._root = path.abspath(root)
             else:
                 raise NotADirectoryError()
         if backend:
