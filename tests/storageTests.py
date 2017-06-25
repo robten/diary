@@ -63,6 +63,24 @@ class FileManagerTest(unittest.TestCase):
                             msg="exists() should return True, when test_file was created")
         isfile_mock.assert_called_with(test_path)
 
+    def test_exists_invalid_state(self):
+        test = FileManager()
+        with self.assertRaises(ValueError,
+                               msg="ValueError missing when exists() is called in invalid state"):
+            test.exists("~/")
+        with self.assertRaises(ValueError,
+                               msg="ValueError missing when store() is called in invalid state"):
+            test.store("test")
+        with self.assertRaises(ValueError,
+                               msg="ValueError missing when retrieve() is called in invalid state"):
+            test.retrieve("test")
+        with self.assertRaises(ValueError,
+                               msg="ValueError missing when delete() is called in invalid state"):
+            test.delete("test")
+        with self.assertRaises(ValueError,
+                               msg="ValueError missing when get_info() is called in invalid state"):
+            test.get_info("test")
+
 
 if __name__ == "__main__":
     unittest.main()

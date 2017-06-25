@@ -24,21 +24,24 @@ class FileManager:
         if compressed is not None:
             self._compression = compressed
 
-    def ready(self):
+    def ready(self, raising=False):  # TODO: Get a more elegant state-checking for all components
+        if raising and self._root is None:
+            raise ValueError("FileManger object is not in a valid state.")
         return self._root is not None
 
     def exists(self, item):
+        self.ready(raising=True)
         return path.isfile(path.join(self._root, item))
 
     def store(self, item,
               name=None, location=None, ftype=None, date=None, hierachy=None):
-        pass
+        self.ready(raising=True)
 
     def retrieve(self, item):
-        pass
+        self.ready(raising=True)
 
     def delete(self, item):
-        pass
+        self.ready(raising=True)
 
     def get_info(self, item):
-        pass
+        self.ready(raising=True)
