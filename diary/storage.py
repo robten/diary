@@ -2,6 +2,7 @@
 # coding: utf-8
 
 from os import path
+import shutil
 
 
 class FileManager:
@@ -33,9 +34,18 @@ class FileManager:
         self.ready(raising=True)
         return path.isfile(path.join(self._root, item))
 
-    def store(self, item,
-              name=None, location=None, ftype=None, date=None, hierachy=None):
+    def store(self, src, name=None, ftype=None, date=None, hierarchy=None):
         self.ready(raising=True)
+        src_path = path.abspath(src)
+        if path.isfile(src_path):
+            stored_name = path.basename(src_path) if not name else name
+            # TODO: Implement optional storing inside subdirectories (hierarchy)
+            if path.exists(path.join(self._root, stored_name)):
+                raise FileExistsError("File with the same name is already stored.")
+            shutil.copy(src_path, self._root)
+            # TODO: Implement optional database storing of meta-data (name, ftype, date, hierarchy)
+        else:
+            raise ValueError("FileManager.store() should only be called with a path to a file.")
 
     def retrieve(self, item):
         self.ready(raising=True)

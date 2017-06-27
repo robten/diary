@@ -2,13 +2,12 @@
 # coding: utf-8
 
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, call
 from os import path
 from diary.storage import FileManager
 
 
 class FileManagerTest(unittest.TestCase):
-
     def test_ready_unset_init(self):
         test = FileManager()
         self.assertFalse(test.ready(),
@@ -80,6 +79,33 @@ class FileManagerTest(unittest.TestCase):
         with self.assertRaises(ValueError,
                                msg="ValueError missing when get_info() is called in invalid state"):
             test.get_info("test")
+
+    def test_store_new_file(self):
+        test_root = "./testroot"
+        test_file = "storage_test.py"
+        source_location = "/tmp"
+        source_path = path.abspath(path.join(source_location, test_file))
+        target_path = path.abspath(path.join(test_root, test_file))
+
+        def exists_side_effect(mocked_path):
+            if mocked_path == path.abspath(test_root):
+                return True
+            if mocked_path == target_path:
+                return False
+
+        exists_mock = MagicMock(side_effect=exists_side_effect)
+        exists_expected_calls = [call(path.abspath(test_root)),
+                                 call(target_path)]
+        isfile_mock = MagicMock(return_value=True)
+        copy_mock = MagicMock()
+        with patch("shutil.copy", copy_mock),\
+             patch("os.path.exists", exists_mock),\
+             patch("os.path.isfile", isfile_mock):
+                test = FileManager(root=test_root)
+                test.store(source_path)
+        exists_mock.assert_has_calls(exists_expected_calls)
+        isfile_mock.assert_called_with(source_path)
+        copy_mock.assert_called_with(source_path, path.abspath(test_root))
 
 
 if __name__ == "__main__":
