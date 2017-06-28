@@ -86,14 +86,8 @@ class FileManagerTest(unittest.TestCase):
         source_location = "/tmp"
         source_path = path.abspath(path.join(source_location, test_file))
         target_path = path.abspath(path.join(test_root, test_file))
-
-        def exists_side_effect(mocked_path):
-            if mocked_path == path.abspath(test_root):
-                return True
-            if mocked_path == target_path:
-                return False
-
-        exists_mock = MagicMock(side_effect=exists_side_effect)
+        exists_mock = MagicMock(side_effect=lambda mock_path: {path.abspath(test_root): True,
+                                                               target_path: False}[mock_path])
         exists_expected_calls = [call(path.abspath(test_root)),
                                  call(target_path)]
         isfile_mock = MagicMock(return_value=True)
