@@ -101,7 +101,7 @@ class FileManagerTest(unittest.TestCase):
         isfile_mock.assert_called_with(source_path)
         copy_mock.assert_called_with(source_path, path.abspath(test_root))
 
-    def test_retrieve(self):
+    def test_get_info(self):
         test_root = "./testroot"
         test_file = "storage_test.py"
         target_path = path.abspath(path.join(test_root, test_file))
@@ -109,7 +109,7 @@ class FileManagerTest(unittest.TestCase):
         exists_mock = MagicMock(return_value=True)
         with patch("os.path.isfile", isfile_mock), patch("os.path.exists", exists_mock):
             test = FileManager(root=test_root)
-            result_obj = test.retrieve(test_file)
+            result_obj = test.get_info(test_file)
         isfile_mock.assert_called_with(target_path)
         self.assertIn("path", result_obj,
                       msg="Returned Obj should have a key or attribute named 'path'.")

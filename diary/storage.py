@@ -49,15 +49,15 @@ class FileManager:
 
     def retrieve(self, item):
         self.ready(raising=True)
-        # right now there is only an implementation without DB usage
-        target_path = path.join(self._root, item)
-        if path.isfile(target_path):
-            return {"path": target_path}
-        else:
-            FileNotFoundError("The item '{}' is not in storage or not a valid item.".format(item))
 
     def delete(self, item):
         self.ready(raising=True)
 
     def get_info(self, item):
         self.ready(raising=True)
+        # right now there is only an implementation without DB usage
+        target_path = path.join(self._root, item)
+        if path.isfile(target_path):
+            return {"path": target_path}
+        else:
+            FileNotFoundError("The item '{}' is not in storage or not a valid item.".format(item))
