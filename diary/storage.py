@@ -47,8 +47,17 @@ class FileManager:
         else:
             raise ValueError("FileManager.store() should only be called with a path to a file.")
 
-    def retrieve(self, item):
+    def retrieve(self, item, target):
         self.ready(raising=True)
+        src_path = path.join(self._root, item)
+        target_path = path.abspath(target)
+        if path.isfile(src_path):
+            if path.isdir(target_path):
+                shutil.copy(src_path, target_path)
+            else:
+                raise NotADirectoryError("'{}' is not a valid target directory.".format(target))
+        else:
+            raise FileNotFoundError("'{}' is not in storage or not a valid item.".format(item))
 
     def delete(self, item):
         self.ready(raising=True)
@@ -56,8 +65,8 @@ class FileManager:
     def get_info(self, item):
         self.ready(raising=True)
         # right now there is only an implementation without DB usage
-        target_path = path.join(self._root, item)
-        if path.isfile(target_path):
-            return {"path": target_path}
+        src_path = path.join(self._root, item)
+        if path.isfile(src_path):
+            return {"path": src_path}
         else:
-            FileNotFoundError("The item '{}' is not in storage or not a valid item.".format(item))
+            raise FileNotFoundError("'{}' is not in storage or not a valid item.".format(item))

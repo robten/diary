@@ -72,7 +72,7 @@ class FileManagerTest(unittest.TestCase):
             test.store("test")
         with self.assertRaises(ValueError,
                                msg="ValueError missing when retrieve() is called in invalid state"):
-            test.retrieve("test")
+            test.retrieve("test", "/nonedir")
         with self.assertRaises(ValueError,
                                msg="ValueError missing when delete() is called in invalid state"):
             test.delete("test")
@@ -101,20 +101,40 @@ class FileManagerTest(unittest.TestCase):
         isfile_mock.assert_called_with(source_path)
         copy_mock.assert_called_with(source_path, path.abspath(test_root))
 
+    def test_retrieve(self):
+        test_root = "./testroot"
+        test_file = "storage_test.py"
+        target_dir = "/tmp/testdir"
+        src_path = path.abspath(path.join(test_root, test_file))
+        target_path = path.abspath(target_dir)
+        isdir_mock = MagicMock(return_value=True)
+        isfile_mock = MagicMock(return_value=True)
+        exists_mock = MagicMock(return_value=True)
+        copy_mock = MagicMock()
+        with patch("os.path.isdir", isdir_mock),\
+             patch("os.path.isfile", isfile_mock),\
+             patch("os.path.exists", exists_mock),\
+             patch("shutil.copy", copy_mock):
+                test = FileManager(root=test_root)
+                test.retrieve(test_file, target_dir)
+        isdir_mock.assert_called_with(target_path)
+        isfile_mock.assert_called_with(src_path)
+        copy_mock.assert_called_with(src_path, target_path)
+
     def test_get_info(self):
         test_root = "./testroot"
         test_file = "storage_test.py"
-        target_path = path.abspath(path.join(test_root, test_file))
+        src_path = path.abspath(path.join(test_root, test_file))
         isfile_mock = MagicMock(return_value=True)
         exists_mock = MagicMock(return_value=True)
         with patch("os.path.isfile", isfile_mock), patch("os.path.exists", exists_mock):
             test = FileManager(root=test_root)
             result_obj = test.get_info(test_file)
-        isfile_mock.assert_called_with(target_path)
+        isfile_mock.assert_called_with(src_path)
         self.assertIn("path", result_obj,
                       msg="Returned Obj should have a key or attribute named 'path'.")
-        self.assertEqual(result_obj["path"], target_path,
-                         msg="Returned Obj's 'path' should match '{}'.".format(target_path))
+        self.assertEqual(result_obj["path"], src_path,
+                         msg="Returned Obj's 'path' should match '{}'.".format(src_path))
 
 
 if __name__ == "__main__":
