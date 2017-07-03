@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-from os import path
 import os
 import shutil
 
@@ -10,15 +9,15 @@ class FileManager:
     def __init__(self, root=None, backend=None, compressed=False):
         self._db = backend
         self._compression = compressed
-        if root and path.exists(path.abspath(root)):
-            self._root = path.abspath(root)
+        if root and os.path.exists(os.path.abspath(root)):
+            self._root = os.path.abspath(root)
         else:
             self._root = None
 
     def set(self, root=None, backend=None, compressed=None):
         if root:
-            if path.exists(path.abspath(root)):
-                self._root = path.abspath(root)
+            if os.path.exists(os.path.abspath(root)):
+                self._root = os.path.abspath(root)
             else:
                 raise NotADirectoryError()
         if backend:
@@ -33,15 +32,15 @@ class FileManager:
 
     def exists(self, item):
         self.ready(raising=True)
-        return path.isfile(path.join(self._root, item))
+        return os.path.isfile(os.path.join(self._root, item))
 
     def store(self, src, name=None, ftype=None, date=None, hierarchy=None):
         self.ready(raising=True)
-        src_path = path.abspath(src)
-        if path.isfile(src_path):
-            stored_name = path.basename(src_path) if not name else name
+        src_path = os.path.abspath(src)
+        if os.path.isfile(src_path):
+            stored_name = os.path.basename(src_path) if not name else name
             # TODO: Implement optional storing inside subdirectories (hierarchy)
-            if path.exists(path.join(self._root, stored_name)):
+            if os.path.exists(os.path.join(self._root, stored_name)):
                 raise FileExistsError("File with the same name is already stored.")
             shutil.copy(src_path, self._root)
             # TODO: Implement optional database storing of meta-data (name, ftype, date, hierarchy)
@@ -50,10 +49,10 @@ class FileManager:
 
     def retrieve(self, item, target):
         self.ready(raising=True)
-        src_path = path.join(self._root, item)
-        target_path = path.abspath(target)
-        if path.isfile(src_path):
-            if path.isdir(target_path):
+        src_path = os.path.join(self._root, item)
+        target_path = os.path.abspath(target)
+        if os.path.isfile(src_path):
+            if os.path.isdir(target_path):
                 shutil.copy(src_path, target_path)
             else:
                 raise NotADirectoryError("'{}' is not a valid target directory.".format(target))
@@ -62,8 +61,8 @@ class FileManager:
 
     def delete(self, item):
         self.ready(raising=True)
-        target_path = path.join(self._root, item)
-        if path.isfile(target_path):
+        target_path = os.path.join(self._root, item)
+        if os.path.isfile(target_path):
             os.remove(target_path)
         else:
             raise FileNotFoundError("'{}' is not in storage or not a valid item.".format(item))
@@ -71,8 +70,8 @@ class FileManager:
     def get_info(self, item):
         self.ready(raising=True)
         # right now there is only an implementation without DB usage
-        src_path = path.join(self._root, item)
-        if path.isfile(src_path):
+        src_path = os.path.join(self._root, item)
+        if os.path.isfile(src_path):
             return {"path": src_path}
         else:
             raise FileNotFoundError("'{}' is not in storage or not a valid item.".format(item))
