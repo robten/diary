@@ -121,6 +121,21 @@ class FileManagerTest(unittest.TestCase):
         isfile_mock.assert_called_with(src_path)
         copy_mock.assert_called_with(src_path, target_path)
 
+    def test_delete(self):
+        test_root = "./testroot"
+        test_file = "storage_test.py"
+        src_path = path.abspath(path.join(test_root, test_file))
+        exists_mock = MagicMock(return_value=True)
+        isfile_mock = MagicMock(return_value=True)
+        remove_mock = MagicMock()
+        with patch("os.path.exists", exists_mock),\
+             patch("os.path.isfile", isfile_mock),\
+             patch("os.remove", remove_mock):
+                test = FileManager(root=test_root)
+                test.delete(test_file)
+        isfile_mock.assert_called_with(src_path)
+        remove_mock.assert_called_with(src_path)
+
     def test_get_info(self):
         test_root = "./testroot"
         test_file = "storage_test.py"

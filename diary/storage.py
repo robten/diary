@@ -2,6 +2,7 @@
 # coding: utf-8
 
 from os import path
+import os
 import shutil
 
 
@@ -61,6 +62,11 @@ class FileManager:
 
     def delete(self, item):
         self.ready(raising=True)
+        target_path = path.join(self._root, item)
+        if path.isfile(target_path):
+            os.remove(target_path)
+        else:
+            raise FileNotFoundError("'{}' is not in storage or not a valid item.".format(item))
 
     def get_info(self, item):
         self.ready(raising=True)
