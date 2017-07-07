@@ -1,35 +1,77 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-from os import path
+import os
+import shutil
 
 
-class StorageBase:
-    def __init__(self, db_backend=None, compressed=False, root=None):
-        self._db = db_backend
+class FileManager:
+    def __init__(self, root=None, backend=None, compressed=False):
+        self._db = backend
         self._compression = compressed
-        if root and path.exists(path.normpath(root)):
-            self._root = path.normpath(root)
+        if root and os.path.exists(os.path.abspath(root)):
+            self._root = os.path.abspath(root)
         else:
             self._root = None
 
-    def set_root(self, root):
-        if path.exists(path.normpath(root)):
-            self._root = root
-        else:
-            raise NotADirectoryError()
+    def set(self, root=None, backend=None, compressed=None):
+        if root:
+            if os.path.exists(os.path.abspath(root)):
+                self._root = os.path.abspath(root)
+            else:
+                raise NotADirectoryError()
+        if backend:
+            self._db = backend
+        if compressed is not None:
+            self._compression = compressed
 
-    def ready(self):
+    def ready(self, raising=False):  # TODO: Get a more elegant state-checking for all components
+        if raising and self._root is None:
+            raise ValueError("FileManger object is not in a valid state.")
         return self._root is not None
 
-    def store(self, item):
-        raise NotImplementedError()
+    def exists(self, item):
+        self.ready(raising=True)
+        return os.path.isfile(os.path.join(self._root, item))
 
+    def store(self, src, name=None, ftype=None, date=None, hierarchy=None):
+        self.ready(raising=True)
+        src_path = os.path.abspath(src)
+        if os.path.isfile(src_path):
+            stored_name = os.path.basename(src_path) if not name else name
+            # TODO: Implement optional storing inside subdirectories (hierarchy)
+            if os.path.exists(os.path.join(self._root, stored_name)):
+                raise FileExistsError("File with the same name is already stored.")
+            shutil.copy(src_path, self._root)
+            # TODO: Implement optional database storing of meta-data (name, ftype, date, hierarchy)
+        else:
+            raise ValueError("FileManager.store() should only be called with a path to a file.")
 
-class FileManager(StorageBase):
-    def __init__(self, *args, **kwargs):
-        super(FileManager, self).__init__(*args, **kwargs)
+    def retrieve(self, item, target):
+        self.ready(raising=True)
+        src_path = os.path.join(self._root, item)
+        target_path = os.path.abspath(target)
+        if os.path.isfile(src_path):
+            if os.path.isdir(target_path):
+                shutil.copy(src_path, target_path)
+            else:
+                raise NotADirectoryError("'{}' is not a valid target directory.".format(target))
+        else:
+            raise FileNotFoundError("'{}' is not in storage or not a valid item.".format(item))
 
-    def store(self, item,
-              name=None, location=None, ftype=None, date=None, hierachy=None):
-        pass
+    def delete(self, item):
+        self.ready(raising=True)
+        target_path = os.path.join(self._root, item)
+        if os.path.isfile(target_path):
+            os.remove(target_path)
+        else:
+            raise FileNotFoundError("'{}' is not in storage or not a valid item.".format(item))
+
+    def get_info(self, item):
+        self.ready(raising=True)
+        # right now there is only an implementation without DB usage
+        src_path = os.path.join(self._root, item)
+        if os.path.isfile(src_path):
+            return {"path": src_path}
+        else:
+            raise FileNotFoundError("'{}' is not in storage or not a valid item.".format(item))
