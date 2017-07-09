@@ -81,6 +81,10 @@ class ComponentTest(unittest.TestCase):
         def __init__(self):
             super(ComponentTest.TestClass, self).__init__()
 
+        @Component.dependent
+        def test_method(self):
+            pass
+
     def test_is_valid_for_invalid_state(self):
         test_obj = self.TestClass()
         test_obj.test = test_obj.invalid_state("test", None)
@@ -91,6 +95,26 @@ class ComponentTest(unittest.TestCase):
         test_obj.test = test_obj.invalid_state("test", None)
         test_obj.test = "content that makes sense"
         self.assertEqual(test_obj.is_valid(), True, msg="test_obj should be in a valid state now")
+
+    def test_is_valid_for_valid_state(self):
+        test_obj = self.TestClass()
+        test_obj.test = test_obj.valid_state("test", "normal state")
+        self.assertEqual(test_obj.is_valid(), True,
+                         msg="test_obj should already be in a valid state")
+
+    def test_is_valid_for_valid_state_made_invalid(self):
+        test_obj = self.TestClass()
+        test_obj.test = test_obj.valid_state("test", "normal state")
+        test_obj.test = "wrong state"
+        self.assertEqual(test_obj.is_valid(), False,
+                         msg="test_obj should be in an invalid state")
+
+    def test_dependent_decorator(self):
+        test_obj = self.TestClass()
+        test_obj.test = test_obj.invalid_state("test", None)
+        with self.assertRaises(ValueError,
+                               msg="calling decorated method in invalid state should raise error"):
+            test_obj.test_method()
 
 
 if __name__ == "__main__":

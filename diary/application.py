@@ -69,7 +69,7 @@ class Component:
             if self.is_valid():
                 return func(self, *args, **kwargs)
             else:
-                raise ValueError("FileManger object is not in a valid state.")
+                raise ValueError("{} object is not in a valid state.".format(cls))
         return wrapper
 
     def valid_state(self, member, value):
