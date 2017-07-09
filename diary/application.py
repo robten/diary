@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
+from functools import wraps
 from utilities import MetaSingleton
 
 
@@ -49,4 +50,36 @@ class App(metaclass=MetaSingleton):
 
     def start(self):
         #  TODO: Implement App.start() when all components are finished
+        pass
+
+
+class Component:
+    """
+    Base class for all components used by App class. It serves both: providing a common
+    interface and internal manageing functionality.
+    """
+    def __init__(self):
+        self._state_postive = dict()
+        self._state_negative = dict()
+
+    @classmethod
+    def dependent(cls, func):
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            if self.is_valid():
+                return func(self, *args, **kwargs)
+            else:
+                raise ValueError("FileManger object is not in a valid state.")
+        return wrapper
+
+    def valid_state(self, member, value):
+        self._state_postive[member] = value
+        return value
+
+    def invalid_state(self, member, value):
+        self._state_negative[member] = value
+        return value
+
+    def is_valid(self):
+        # TODO: Check positive an negative state definitions and return True of False
         pass

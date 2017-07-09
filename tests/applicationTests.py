@@ -3,7 +3,7 @@
 
 import unittest
 from unittest.mock import MagicMock
-from diary.application import App
+from diary.application import App, Component
 
 
 class AppTest(unittest.TestCase):
@@ -73,6 +73,24 @@ class AppTest(unittest.TestCase):
         test_kwargs = {"geometry": (800,600)}
         self.app.setup_view(**test_kwargs)
         self.app._view.set.assert_called_with(**test_kwargs)
+
+
+class ComponentTest(unittest.TestCase):
+
+    class TestClass(Component):
+        def __init__(self):
+            super(ComponentTest.TestClass, self).__init__()
+
+    def test_is_valid_for_invalid_state(self):
+        test_obj = self.TestClass()
+        test_obj.test = test_obj.invalid_state("test", None)
+        self.assertEqual(test_obj.is_valid(), False, msg="test_obj should be in an invalid state")
+
+    def test_is_valid_for_invalid_state_made_valid(self):
+        test_obj = self.TestClass()
+        test_obj.test = test_obj.invalid_state("test", None)
+        test_obj.test = "content that makes sense"
+        self.assertEqual(test_obj.is_valid(), True, msg="test_obj should be in a valid state now")
 
 
 if __name__ == "__main__":
