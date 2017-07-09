@@ -81,5 +81,10 @@ class Component:
         return value
 
     def is_valid(self):
-        # TODO: Check positive an negative state definitions and return True of False
-        pass
+        for member in self._state_postive:
+            if self._state_postive[member] != self.__dict__[member]:
+                return False
+        for member in self._state_negative:
+            if self._state_negative[member] == self.__dict__[member]:
+                return False
+        return True
