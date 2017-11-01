@@ -61,6 +61,8 @@ class Component:
     def __init__(self):
         self._state_postive = dict()
         self._state_negative = dict()
+        self._states_alternate_positive = dict()
+        self._states_alternate_negative = dict()
 
     @classmethod
     def dependent(cls, func):
@@ -80,11 +82,35 @@ class Component:
         self._state_negative[member] = value
         return value
 
+    def alternate_valid_states(self, **kwargs):
+        self._states_alternate_positive.update(**kwargs)
+        print(kwargs)
+        return tuple(value for member, value in kwargs.items())
+
+    def alternate_invalid_states(self, **kwargs):
+        self._states_alternate_negative.update(**kwargs)
+        print(kwargs)
+        return tuple(value for member, value in kwargs.items())
+
     def is_valid(self):
         for member in self._state_postive:
             if self._state_postive[member] != self.__dict__[member]:
                 return False
         for member in self._state_negative:
             if self._state_negative[member] == self.__dict__[member]:
+                return False
+        if len(self._states_alternate_positive) > 0:
+            false_state = 0
+            for member, value in self._states_alternate_positive.items():
+                if value != self.__dict__[member]:
+                    false_state += 1
+            if false_state == len(self._states_alternate_positive):
+                return False
+        if len(self._states_alternate_negative) > 0:
+            false_state = 0
+            for member, value in self._states_alternate_negative.items():
+                if value == self.__dict__[member]:
+                    false_state += 1
+            if false_state == len(self._states_alternate_negative):
                 return False
         return True
