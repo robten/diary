@@ -109,34 +109,18 @@ class ComponentTest(unittest.TestCase):
         self.assertEqual(test_obj.is_valid(), False,
                          msg="test_obj should be in an invalid state")
 
-    def test_alternate_valid_states_correct_returns(self):
-        test_obj = self.TestClass()
-        kwargs = {"test1": 1, "test2": 2}
-        test_obj.test1, test_obj.test2 = test_obj.alternate_valid_states(**kwargs)
-        for member, value in kwargs.items():
-            self.assertEqual(test_obj.__dict__[member], value,
-                             msg="assigned pairs should match value in returned tuple.")
-
-    def test_alternate_invalid_states_correct_returns(self):
-        test_obj = self.TestClass()
-        kwargs = {"test1": None, "test2": None}
-        test_obj.test1, test_obj.test2 = test_obj.alternate_invalid_states(**kwargs)
-        for member, value in kwargs.items():
-            self.assertEqual(test_obj.__dict__[member], value,
-                             msg="assigned pairs should match value in returned tuple.")
-
     def test_alternate_valid_states_for_valid_state(self):
         test_obj = self.TestClass()
-        kwargs = {"test1": 1, "test2": 2}
-        test_obj.test1, test_obj.test2 = test_obj.alternate_valid_states(**kwargs)
+        test_obj.test1 = test_obj.valid_state("test1", 1, alternate=True)
+        test_obj.test2 = test_obj.valid_state("test2", 2, alternate=True)
         test_obj.test1 = 5
         self.assertEqual(test_obj.is_valid(), True,
                          msg="test_obj should be in a valid alternate state")
 
     def test_alternate_valid_states_for_invalid_state(self):
         test_obj = self.TestClass()
-        kwargs = {"test1": 1, "test2": 2}
-        test_obj.test1, test_obj.test2 = test_obj.alternate_valid_states(**kwargs)
+        test_obj.test1 = test_obj.valid_state("test1", 1, alternate=True)
+        test_obj.test2 = test_obj.valid_state("test2", 2, alternate=True)
         test_obj.test1 = 5
         test_obj.test2 = 10
         self.assertEqual(test_obj.is_valid(), False,
@@ -144,16 +128,16 @@ class ComponentTest(unittest.TestCase):
 
     def test_alternate_invalid_states_for_valid_state(self):
         test_obj = self.TestClass()
-        kwargs = {"test1": None, "test2": None}
-        test_obj.test1, test_obj.test2 = test_obj.alternate_valid_states(**kwargs)
+        test_obj.test1 = test_obj.invalid_state("test1", None, alternate=True)
+        test_obj.test2 = test_obj.invalid_state("test2", None, alternate=True)
         test_obj.test1 = 5
         self.assertEqual(test_obj.is_valid(), True,
                          msg="test_obj should be in a valid alternate state")
 
     def test_alternate_invalid_states_for_invalid_state(self):
         test_obj = self.TestClass()
-        kwargs = {"test1": None, "test2": None}
-        test_obj.test1, test_obj.test2 = test_obj.alternate_invalid_states(**kwargs)
+        test_obj.test1 = test_obj.invalid_state("test1", None, alternate=True)
+        test_obj.test2 = test_obj.invalid_state("test2", None, alternate=True)
         self.assertEqual(test_obj.is_valid(), False,
                          msg="test_obj should be in an invalid alternate state")
 

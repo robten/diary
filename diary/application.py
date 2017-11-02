@@ -74,23 +74,19 @@ class Component:
                 raise ValueError("{} object is not in a valid state.".format(cls))
         return wrapper
 
-    def valid_state(self, member, value):
-        self._state_postive[member] = value
+    def valid_state(self, member, value, alternate=False):
+        if not alternate:
+            self._state_postive[member] = value
+        else:
+            self._states_alternate_positive.update({member: value})
         return value
 
-    def invalid_state(self, member, value):
-        self._state_negative[member] = value
+    def invalid_state(self, member, value, alternate=False):
+        if not alternate:
+            self._state_negative[member] = value
+        else:
+            self._states_alternate_negative.update({member: value})
         return value
-
-    def alternate_valid_states(self, **kwargs):
-        self._states_alternate_positive.update(**kwargs)
-        print(kwargs)
-        return tuple(value for member, value in kwargs.items())
-
-    def alternate_invalid_states(self, **kwargs):
-        self._states_alternate_negative.update(**kwargs)
-        print(kwargs)
-        return tuple(value for member, value in kwargs.items())
 
     def is_valid(self):
         for member in self._state_postive:
