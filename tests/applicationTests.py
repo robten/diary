@@ -25,7 +25,7 @@ class AppTest(unittest.TestCase):
         Test if load_conf() without path argument raises the correct error when the
         corresponding components ready() returns False (hence component is not set yet).
         """
-        self.app._conf.ready.return_value = False
+        self.app._conf.is_valid.return_value = False
         with self.assertRaises(FileNotFoundError,
                                msg="there should be no file set hence non found"):
             self.app.load_conf()
@@ -35,21 +35,21 @@ class AppTest(unittest.TestCase):
         Test if load_conf() without path argument calles only the components load()
         without extra call to its set_source().
         """
-        self.app._conf.ready.return_value = True
+        self.app._conf.is_valid.return_value = True
         self.app.load_conf()
         self.app._conf.set_source.assert_not_called()
         self.app._conf.load.assert_called_with()
 
     def test_is_ready(self):
-        self.app._view.ready.return_value = True
+        self.app._view.is_valid.return_value = True
         self.assertTrue(self.app.is_ready("view"), "is_ready() should return True")
-        self.app._view.ready.assert_called_once_with()
+        self.app._view.is_valid.assert_called_once_with()
 
     def test_is_ready_with_wrong_component(self):
-        self.app._view.ready.return_value = True
+        self.app._view.is_valid.return_value = True
         with self.assertRaises(KeyError, msg="is_ready() should reraise KeyError"):
             self.app.is_ready("wrong_view")
-        self.app._view.ready.assert_called_once_with()
+        self.app._view.is_valid.assert_called_once_with()
 
     def test_setup_database_for_mysql(self):
         test_kwargs = {"user": "tester",

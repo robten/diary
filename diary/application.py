@@ -21,7 +21,7 @@ class App(metaclass=MetaSingleton):
         if path:
             self._conf.set_source(path=path)
             self._conf.load()
-        elif self._conf.ready():
+        elif self.is_ready("conf"):
             self._conf.load()
         else:
             raise FileNotFoundError("path not set hence config can't load")
@@ -30,7 +30,7 @@ class App(metaclass=MetaSingleton):
     def is_ready(self, component):
         attr = "_" + component
         try:
-            result = self.__dict__[attr].ready()
+            result = self.__dict__[attr].is_valid()
         except KeyError:
             raise KeyError("No component by the name of '" + component + "'.")
         else:
