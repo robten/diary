@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
+from functools import wraps
 from utilities import MetaSingleton
 
 
@@ -20,7 +21,7 @@ class App(metaclass=MetaSingleton):
         if path:
             self._conf.set_source(path=path)
             self._conf.load()
-        elif self._conf.ready():
+        elif self.is_ready("conf"):
             self._conf.load()
         else:
             raise FileNotFoundError("path not set hence config can't load")
@@ -29,7 +30,7 @@ class App(metaclass=MetaSingleton):
     def is_ready(self, component):
         attr = "_" + component
         try:
-            result = self.__dict__[attr].ready()
+            result = self.__dict__[attr].is_valid()
         except KeyError:
             raise KeyError("No component by the name of '" + component + "'.")
         else:
@@ -50,3 +51,62 @@ class App(metaclass=MetaSingleton):
     def start(self):
         #  TODO: Implement App.start() when all components are finished
         pass
+
+
+class Component:
+    """
+    Base class for all components used by App class. It serves both: providing a common
+    interface and internal manageing functionality.
+    """
+    def __init__(self):
+        self._state_postive = dict()
+        self._state_negative = dict()
+        self._states_alternate_positive = dict()
+        self._states_alternate_negative = dict()
+
+    @classmethod
+    def dependent(cls, func):
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            if self.is_valid():
+                return func(self, *args, **kwargs)
+            else:
+                raise ValueError("{} object is not in a valid state.".format(cls))
+        return wrapper
+
+    def valid_state(self, member, value, alternate=False):
+        if not alternate:
+            self._state_postive[member] = value
+        else:
+            self._states_alternate_positive.update({member: value})
+        return value
+
+    def invalid_state(self, member, value, alternate=False):
+        if not alternate:
+            self._state_negative[member] = value
+        else:
+            self._states_alternate_negative.update({member: value})
+        return value
+
+    def is_valid(self):
+        for member in self._state_postive:
+            if self._state_postive[member] != self.__dict__[member]:
+                return False
+        for member in self._state_negative:
+            if self._state_negative[member] == self.__dict__[member]:
+                return False
+        if len(self._states_alternate_positive) > 0:
+            false_state = 0
+            for member, value in self._states_alternate_positive.items():
+                if value != self.__dict__[member]:
+                    false_state += 1
+            if false_state == len(self._states_alternate_positive):
+                return False
+        if len(self._states_alternate_negative) > 0:
+            false_state = 0
+            for member, value in self._states_alternate_negative.items():
+                if value == self.__dict__[member]:
+                    false_state += 1
+            if false_state == len(self._states_alternate_negative):
+                return False
+        return True

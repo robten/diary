@@ -67,15 +67,6 @@ class TestManagerBase(unittest.TestCase):
                              self.conf_manager._config_file,
                              "test_source() did not set file correctly")
 
-    def test_ready_when_set(self):
-        self.conf_manager.set_source(path="./config/test")
-        self.assertTrue(self.conf_manager.ready(),
-                        "ready() didn't return True when correctly set up.")
-
-    def test_ready_when_not_set(self):
-        self.assertFalse(self.conf_manager.ready(),
-                         "ready() didn't return False when not correctly set up.")
-
 
 class TestINImanager(unittest.TestCase):
 
@@ -84,14 +75,14 @@ class TestINImanager(unittest.TestCase):
         Test for expected failure when load() is called without setting a source path or file.
         """
         conf_manager = INImanager()
-        self.assertRaises(FileNotFoundError, conf_manager.load)
+        self.assertRaises(ValueError, conf_manager.load)
 
     def test_save_file_not_found_failure(self):
         """
         Test for expected failure when save() is called without setting a source path or file.
         """
         conf_manager = INImanager()
-        self.assertRaises(FileNotFoundError, conf_manager.save)
+        self.assertRaises(ValueError, conf_manager.save)
 
     def test_load_file(self):
         """
@@ -131,14 +122,14 @@ class TestJSONmanager(unittest.TestCase):
         Test for expected failure when load() is called without setting a source path or file.
         """
         conf_manager = JSONmanager()
-        self.assertRaises(FileNotFoundError, conf_manager.load)
+        self.assertRaises(ValueError, conf_manager.load)
 
     def test_save_file_not_found_failure(self):
         """
         Test for expected failure when save() is called without setting a source path or file.
         """
         conf_manager = JSONmanager()
-        self.assertRaises(FileNotFoundError, conf_manager.save)
+        self.assertRaises(ValueError, conf_manager.save)
 
     def test_load_file(self):
         """

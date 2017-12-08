@@ -3,10 +3,14 @@
 
 import json
 from configparser import ConfigParser
+from diary.application import Component
 
 
-class ManagerBase:
+class ManagerBase(Component):
     def __init__(self, path=None, file=None):
+        super(ManagerBase, self).__init__()
+        self.invalid_state("_config_path", None, alternate=True)
+        self.invalid_state("_config_file", None, alternate=True)
         self._config_path = path
         self._config_file = file
         self._default_section = "DEFAULT"
@@ -35,12 +39,6 @@ class ManagerBase:
         if file:
             self._config_file = file
 
-    def ready(self):
-        if self._config_file or self._config_path:
-            return True
-        else:
-            return False
-
     def save(self):
         """
         Saving the data of ManagerBase should be done by an overriding method in a subclass.
@@ -59,6 +57,7 @@ class INImanager(ManagerBase):
         super(INImanager, self).__init__(*args, **kwargs)
         self._config = ConfigParser()
 
+    @Component.dependent
     def save(self):
         self._config.read_dict(self._data)
         if self._config_path:
@@ -69,6 +68,7 @@ class INImanager(ManagerBase):
         else:
             raise FileNotFoundError()
 
+    @Component.dependent
     def load(self):
         if self._config_path:
             with open(self._config_path) as file:
@@ -87,6 +87,7 @@ class JSONmanager(ManagerBase):
     def __init__(self, *args, **kwargs):
         super(JSONmanager, self).__init__(*args, **kwargs)
 
+    @Component.dependent
     def save(self):
         if self._config_path:
             with open(self._config_path, 'w') as file:
@@ -96,6 +97,7 @@ class JSONmanager(ManagerBase):
         else:
             raise FileNotFoundError()
 
+    @Component.dependent
     def load(self):
         if self._config_path:
             with open(self._config_path) as file:

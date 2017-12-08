@@ -8,16 +8,6 @@ from diary.storage import FileManager
 
 
 class FileManagerTest(unittest.TestCase):
-    def test_ready_unset_init(self):
-        test = FileManager()
-        self.assertFalse(test.ready(),
-                         msg="for an unset FileManager ready() should return False")
-
-    def test_ready_set_init(self):
-        test = FileManager(root="./")
-        self.assertTrue(test.ready(),
-                        msg="for a set FileManager ready() should return True")
-
     def test_set_root(self):
         test_root = "./"
         test = FileManager()
