@@ -8,8 +8,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 
 class DbManager:
-    def __init__(self, driver="sqlite", db=None, user=None, password=None, host=None,
-                 port=None):
+    def __init__(self, driver="sqlite", db=None, user=None, password=None, host=None, port=None):
         self.engine = create_engine(URL(drivername=driver, database=db, host=host, port=port,
                                         username=user, password=password))
         self.Session = sessionmaker(bind=self.engine)
@@ -17,7 +16,9 @@ class DbManager:
         self._stage = None
 
     def add(self, *args):
-        pass
+        if not self._stage:
+            self._stage = self.Session()
+        self._stage.add_all(*args)
 
     def commit(self):
         pass
