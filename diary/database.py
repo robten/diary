@@ -11,14 +11,12 @@ class DbManager:
     def __init__(self, driver="sqlite", db=None, user=None, password=None, host=None, port=None):
         self.engine = create_engine(URL(drivername=driver, database=db, host=host, port=port,
                                         username=user, password=password))
-        self.Session = sessionmaker(bind=self.engine)
         self.Model = declarative_base()
-        self._stage = None
+        Session = sessionmaker(bind=self.engine)
+        self._session = Session()
 
     def add(self, *args):
-        if not self._stage:
-            self._stage = self.Session()
-        self._stage.add_all(*args)
+        self._session.add_all(*args)
 
     def commit(self):
         pass
