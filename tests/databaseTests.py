@@ -25,6 +25,18 @@ class TestDbManager(unittest.TestCase):
         manager.commit()
         manager._session.commit.assert_called_with()
 
+    def test_get(self):
+        """
+        Test querying the database.
+        """
+        class TestEntry:
+            pass
+        manager = DbManager()
+        manager._session = MagicMock()
+        manager._session.query.return_value(MagicMock())
+        manager.get(TestEntry).all()
+        manager._session.query.assert_called_with(TestEntry)
+
 
 if __name__ == '__main__':
     unittest.main()

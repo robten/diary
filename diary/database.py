@@ -21,5 +21,5 @@ class DbManager:
     def commit(self):
         self._session.commit()
 
-    def get(self):
-        pass
+    def get(self, *args, **kwargs):
+        return self._session.query(*args, **kwargs)
