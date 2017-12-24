@@ -13,11 +13,17 @@ class TestDbManager(unittest.TestCase):
         Test if add() pushes the given parameters to the internaly used db session.
         """
         manager = DbManager()
-        manager.Session = MagicMock()
+        manager._session = MagicMock()
         test_entry1 = "not important"
         test_entry2 = "not important"
         manager.add(test_entry1, test_entry2)
         manager._session.add_all.assert_called_with(test_entry1, test_entry2)
+
+    def test_commit(self):
+        manager = DbManager()
+        manager._session = MagicMock()
+        manager.commit()
+        manager._session.commit.assert_called_with()
 
 
 if __name__ == '__main__':

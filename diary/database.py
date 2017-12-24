@@ -19,7 +19,7 @@ class DbManager:
         self._session.add_all(*args)
 
     def commit(self):
-        pass
+        self._session.commit()
 
     def get(self):
         pass
