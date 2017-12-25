@@ -4,14 +4,14 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine.url import URL
-from sqlalchemy.ext.declarative import declarative_base
+from diary.models import Model
 
 
 class DbManager:
     def __init__(self, driver="sqlite", db=None, user=None, password=None, host=None, port=None):
         self.engine = create_engine(URL(drivername=driver, database=db, host=host, port=port,
                                         username=user, password=password))
-        self.Model = declarative_base()
+        Model.metadata.create_all(self.engine)
         Session = sessionmaker(bind=self.engine)
         self._session = Session()
 
