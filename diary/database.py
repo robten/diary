@@ -16,7 +16,10 @@ class DbManager:
         self._session = Session()
 
     def add(self, *args):
-        self._session.add_all(*args)
+        if all(isinstance(arg, Model) for arg in args):
+            self._session.add_all(args)
+        else:
+            raise TypeError("Not only instances of {} where given.".format(str(Model)))
 
     def commit(self):
         self._session.commit()
