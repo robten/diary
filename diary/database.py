@@ -24,5 +24,8 @@ class DbManager:
     def commit(self):
         self._session.commit()
 
+    def rollback(self):
+        self._session.rollback()
+
     def get(self, *args, **kwargs):
         return self._session.query(*args, **kwargs)

@@ -46,6 +46,11 @@ class TestDbManager(unittest.TestCase):
         self.db.get(Entry).all()
         self.db._session.query.assert_called_with(Entry)
 
+    def test_rollback(self):
+        self.db._session = MagicMock()
+        self.db.rollback()
+        self.db._session.rollback.assert_called_with()
+
 
 if __name__ == '__main__':
     unittest.main()
