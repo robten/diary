@@ -29,6 +29,10 @@ class DbManager(Component):
             raise TypeError("Not only instances of {} where given.".format(str(Model)))
 
     @Component.dependent
+    def delete(self, item):
+        self._session.delete(item)
+
+    @Component.dependent
     def commit(self):
         self._session.commit()
 

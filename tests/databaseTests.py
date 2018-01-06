@@ -52,6 +52,12 @@ class TestDbManager(unittest.TestCase):
         self.db.rollback()
         self.db._session.rollback.assert_called_with()
 
+    def test_delete(self):
+        self.db._session = MagicMock()
+        test_entry = Entry(title="testing", text="test item")
+        self.db.delete(test_entry)
+        self.db._session.delete.assert_called_with(test_entry)
+
 
 if __name__ == '__main__':
     unittest.main()
