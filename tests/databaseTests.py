@@ -11,6 +11,7 @@ class TestDbManager(unittest.TestCase):
 
     def setUp(self):
         self.db = DbManager()
+        self.db.initialize()
 
     def test_add_wrong_type(self):
         """
