@@ -3,13 +3,13 @@
 
 from diary.application import App
 from diary.configmanager import INImanager
-from diary.database import SQLiteManager
+from diary.database import DbManager
 from diary.storage import FileManager
 from diary.views import TerminalView
 
 
 app = App(conf_component=INImanager(),
-          db_component=SQLiteManager(),
+          db_component=DbManager(),
           storage_component=FileManager(),
           view_component=TerminalView())
 app.load_conf("./config/config.ini")
