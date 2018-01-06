@@ -26,11 +26,14 @@ class DbManager(Component):
         if all(isinstance(arg, Model) for arg in args):
             self._session.add_all(args)
         else:
-            raise TypeError("Not only instances of {} where given.".format(str(Model)))
+            raise TypeError("Not called with a valid instance(s) of {}.".format(str(Model)))
 
     @Component.dependent
     def delete(self, item):
-        self._session.delete(item)
+        if isinstance(item, Model):
+            self._session.delete(item)
+        else:
+            raise TypeError("Not called with a valid instance of {}.".format(str(Model)))
 
     @Component.dependent
     def commit(self):

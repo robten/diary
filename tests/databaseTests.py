@@ -52,7 +52,13 @@ class TestDbManager(unittest.TestCase):
         self.db.rollback()
         self.db._session.rollback.assert_called_with()
 
-    def test_delete(self):
+    def test_delete_wrong_type(self):
+        wrong_entry = "text only"
+        with self.assertRaises(TypeError,
+                               msg="Should raise TypeError, when no registered model was given"):
+            self.db.delete(wrong_entry)
+
+    def test_delete_correct_type(self):
         self.db._session = MagicMock()
         test_entry = Entry(title="testing", text="test item")
         self.db.delete(test_entry)
