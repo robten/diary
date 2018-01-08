@@ -12,37 +12,37 @@ class DbManager(Component):
     def __init__(self):
         super(DbManager, self).__init__()
         self.engine = self.invalid_state("engine", None)
-        self._session = self.invalid_state("_session", None)
+        self.Session = self.invalid_state("Session", None)
+        self._transaction = {"create": list(), "update": list(), "delete": list()}
 
     def initialize(self, driver="sqlite", db=None, user=None, password=None, host=None, port=None):
         self.engine = create_engine(URL(drivername=driver, database=db, host=host, port=port,
                                         username=user, password=password))
         Model.metadata.create_all(self.engine)
-        Session = sessionmaker(bind=self.engine)
-        self._session = Session()
+        self.Session = sessionmaker(bind=self.engine)
+
+    def _transaction_add(self, section, *items):
+        for item in items:
+            if isinstance(item, Model):
+                if item not in self._transaction[section]:
+                    self._transaction[section].append(item)
+            else:
+                raise TypeError("Item of {} can't be appended to a commit.".format(type(item)))
+
+    def create(self, *items):
+        self._transaction_add("create", items)
 
     @Component.dependent
-    def add(self, *args):
-        if all(isinstance(arg, Model) for arg in args):
-            self._session.add_all(args)
-        else:
-            raise TypeError("Not called with a valid instance(s) of {}.".format(str(Model)))
+    def read(self, *args, **kwargs):
+        pass  # Implement read with own session
 
-    @Component.dependent
-    def delete(self, item):
-        if isinstance(item, Model):
-            self._session.delete(item)
-        else:
-            raise TypeError("Not called with a valid instance of {}.".format(str(Model)))
+    def update(self, *items):
+        self._transaction_add("update", items)
+
+    def delete(self, *items):
+        self._transaction_add("delete", items)
 
     @Component.dependent
     def commit(self):
-        self._session.commit()
+        pass  # Implement committing _transaction in its own session
 
-    @Component.dependent
-    def rollback(self):
-        self._session.rollback()
-
-    @Component.dependent
-    def get(self, *args, **kwargs):
-        return self._session.query(*args, **kwargs)
