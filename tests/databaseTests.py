@@ -53,6 +53,17 @@ class TestDbManagerIntegration(unittest.TestCase):
         self.db.delete(test2)
         self.db.commit()
         self.assertFalse(test2 in self.db.session)
+        result = self.db.read(Entry).all()
+        self.assertTrue(test2 not in result)
+        self.assertIs(test1, result[0])
+
+    def test_read(self):
+        test1 = Entry(title="test1", text="test text1")
+        test2 = Entry(title="test2", text="test text2")
+        self.db.create(test1, test2)
+        self.db.commit()
+        result = self.db.read(Entry).filter_by(title="test2").one()
+        self.assertIs(result, test2)
 
 
 if __name__ == '__main__':

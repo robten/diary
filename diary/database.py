@@ -42,7 +42,7 @@ class DbManager(Component):
 
     @Component.dependent
     def read(self, *args, **kwargs):
-        pass  # Implement read with own session
+        return self.session.query(*args, **kwargs)
 
     @Component.dependent
     def update(self, *items):
