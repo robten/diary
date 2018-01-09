@@ -13,7 +13,6 @@ class DbManager(Component):
         super(DbManager, self).__init__()
         self.engine = self.invalid_state("engine", None)
         self.session = self.invalid_state("session", None)
-        self._transaction = {"create": list(), "update": list(), "delete": list()}
 
     def initialize(self, driver="sqlite", db=None, user=None, password=None, host=None, port=None):
         self.engine = create_engine(URL(drivername=driver, database=db, host=host, port=port,
@@ -21,47 +20,38 @@ class DbManager(Component):
         Model.metadata.create_all(self.engine)
         self.session = sessionmaker(bind=self.engine)()
 
-    def _transaction_add(self, section, *items):
-        if section not in self._transaction.keys():
-            raise ValueError("Section isn't one of these keys: {}".format(self._transaction.keys()))
-        for item in items:
-            if isinstance(item, Model):
-                if item not in self._transaction[section]:
-                    self._transaction[section].append(item)
-            else:
-                raise TypeError("Item of {} can't be appended to a commit.".format(type(item)))
+    def _session_action(self, action, *items):
+        if action == "add":
+            for item in items:
+                if isinstance(item, Model):
+                    self.session.add(item)
+                else:
+                    raise TypeError("Item of {} can't be appended to a commit.".format(type(item)))
+        elif action == "delete":
+            for item in items:
+                if isinstance(item, Model):
+                    self.session.delete(item)
+                else:
+                    raise TypeError("Item of {} can't be appended to a commit.".format(type(item)))
+        else:
+            raise ValueError("action should be 'add' or 'delete'.")
 
+    @Component.dependent
     def create(self, *items):
-        self._transaction_add("create", *items)
+        self._session_action("add", *items)
 
     @Component.dependent
     def read(self, *args, **kwargs):
         pass  # Implement read with own session
 
+    @Component.dependent
     def update(self, *items):
-        self._transaction_add("update", *items)
+        self._session_action("add", *items)
 
+    @Component.dependent
     def delete(self, *items):
-        self._transaction_add("delete", *items)
+        self._session_action("delete", *items)
 
     @Component.dependent
     def commit(self):
-        create_pending = len(self._transaction["create"]) > 0
-        update_pending = len(self._transaction["update"]) > 0
-        delete_pending = len(self._transaction["delete"]) > 0
-        if any([create_pending, update_pending, delete_pending]):
-            if create_pending:
-                for item in self._transaction["create"]:
-                    self.session.add(item)
-                self._transaction["create"].clear()
-            if update_pending:
-                for item in self._transaction["update"]:
-                    self.session.add(item)
-                self._transaction["update"].clear()
-            if delete_pending:
-                for item in self._transaction["delete"]:
-                    self.session.delete(item)
-                self._transaction["delete"].clear()
-            self.session.commit()
-        else:
-            return False
+        self.session.commit()
