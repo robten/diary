@@ -38,6 +38,12 @@ class TestDbManager(unittest.TestCase):
         with self.assertRaises(TypeError, msg="Invalid  item type should raise TypeError."):
             self.db._transaction_add("create", test1, test2)
 
+    def test_transaction_add_invalid_section(self):
+        test1 = Entry(title="test1", text="test text1")
+        test2 = Entry(title="test2", text="test text2")
+        with self.assertRaises(ValueError, msg="Invalid tag should raise ValueError."):
+            self.db._transaction_add("wrong", test1, test2)
+
 
 if __name__ == '__main__':
     unittest.main()

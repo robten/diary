@@ -22,6 +22,8 @@ class DbManager(Component):
         self.Session = sessionmaker(bind=self.engine)
 
     def _transaction_add(self, section, *items):
+        if section not in self._transaction.keys():
+            raise ValueError("Section isn't one of these keys: {}".format(self._transaction.keys()))
         for item in items:
             if isinstance(item, Model):
                 if item not in self._transaction[section]:
@@ -45,4 +47,3 @@ class DbManager(Component):
     @Component.dependent
     def commit(self):
         pass  # Implement committing _transaction in its own session
-
