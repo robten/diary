@@ -32,16 +32,12 @@ class DbManager(Component):
             raise ValueError("action should be 'add' or 'delete'.")
 
     @Component.dependent
-    def create(self, *items):
+    def add(self, *items):
         self._session_action("add", *items)
 
     @Component.dependent
     def read(self, *args, **kwargs):
         return self.session.query(*args, **kwargs)
-
-    @Component.dependent
-    def update(self, *items):
-        self._session_action("add", *items)
 
     @Component.dependent
     def delete(self, *items):
