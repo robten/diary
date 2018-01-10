@@ -21,16 +21,11 @@ class DbManager(Component):
         self.session = sessionmaker(bind=self.engine)()
 
     def _session_action(self, action, *items):
-        if action == "add":
+        actions = ["add", "delete"]
+        if action in actions:
             for item in items:
                 if isinstance(item, Model):
-                    self.session.add(item)
-                else:
-                    raise TypeError("Item of {} can't be appended to a commit.".format(type(item)))
-        elif action == "delete":
-            for item in items:
-                if isinstance(item, Model):
-                    self.session.delete(item)
+                    getattr(self.session, action)(item)
                 else:
                     raise TypeError("Item of {} can't be appended to a commit.".format(type(item)))
         else:
