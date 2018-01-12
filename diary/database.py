@@ -46,3 +46,7 @@ class DbManager(Component):
     @Component.dependent
     def commit(self):
         self.session.commit()
+
+    @Component.dependent
+    def rollback(self):
+        self.session.rollback()
