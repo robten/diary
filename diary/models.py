@@ -5,10 +5,10 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Date
 
 
-SqlDeclarative = declarative_base()
+Model = declarative_base()
 
 
-class Entry(SqlDeclarative):
+class Entry(Model):
     __tablename__ = "entry"
     id = Column(Integer, primary_key=True)
     title = Column(String(50))

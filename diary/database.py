@@ -1,8 +1,52 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.engine.url import URL
+from diary.application import Component
+from diary.models import Model
 
-class SQLiteManager:
-    pass
 
-# TODO: DB components to be implemented
+class DbManager(Component):
+    def __init__(self):
+        super(DbManager, self).__init__()
+        self.engine = self.invalid_state("engine", None)
+        self.session = self.invalid_state("session", None)
+
+    def initialize(self, driver="sqlite", db=None, user=None, password=None, host=None, port=None):
+        self.engine = create_engine(URL(drivername=driver, database=db, host=host, port=port,
+                                        username=user, password=password))
+        Model.metadata.create_all(self.engine)
+        self.session = sessionmaker(bind=self.engine)()
+
+    def _session_action(self, action, *items):
+        actions = ["add", "delete"]
+        if action in actions:
+            for item in items:
+                if isinstance(item, Model):
+                    getattr(self.session, action)(item)
+                else:
+                    raise TypeError("Item of {} can't be appended to a commit.".format(type(item)))
+        else:
+            raise ValueError("action should be 'add' or 'delete'.")
+
+    @Component.dependent
+    def add(self, *items):
+        self._session_action("add", *items)
+
+    @Component.dependent
+    def read(self, *args, **kwargs):
+        return self.session.query(*args, **kwargs)
+
+    @Component.dependent
+    def delete(self, *items):
+        self._session_action("delete", *items)
+
+    @Component.dependent
+    def commit(self):
+        self.session.commit()
+
+    @Component.dependent
+    def rollback(self):
+        self.session.rollback()
