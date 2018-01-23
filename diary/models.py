@@ -22,11 +22,18 @@ class Entry(Model):
     timestamp = Column(Date)
     files = relationship("File", secondary=entry_files, back_populates="entries")
 
+    def __repr__(self):
+        return "Entry(id={}, title='{}')".format(self.id, self.title)
+
 
 class File(Model):
     __tablename__ = "files"
     id = Column(Integer, primary_key=True)
     name = Column(String(80))
-    path = Column(String(120))
+    subpath = Column(String(120))
+    type = Column(String(10))
     timestamp = Column(Date)
     entries = relationship("Entry", secondary=entry_files, back_populates="files")
+
+    def __repr__(self):
+        return "File(id={}, name='{}')".format(self.id, self.name)
