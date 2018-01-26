@@ -2,15 +2,20 @@
 # coding: utf-8
 
 
-from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt
+from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt, QVariant
 
 
 class SqlAlchemyQueryModel(QAbstractTableModel):
-    def __init__(self, parent=None):
+    def __init__(self, query, headers, parent=None):
         super(SqlAlchemyQueryModel, self).__init__(parent)
+        self._headers = headers
+        self._query = query
+        self._data = self._query.all()
 
-    def headerData(self, section, orientation, role=Qt.DisplayRole):
-        pass
+    def headerData(self, column, orientation=Qt.Horizontal, role=Qt.DisplayRole):
+        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+            return QVariant(self._headers[column])
+        return QVariant()
 
     def data(self, index, role=Qt.DisplayRole):
         pass
@@ -31,10 +36,10 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         pass
 
     def flags(self, index):
-        pass
+        return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
 
     def columnCount(self, parent=QModelIndex(), *args, **kwargs):
-        pass
+        return len(self._headers)
 
     def rowCount(self, parent=QModelIndex(), *args, **kwargs):
-        pass
+        return len(self._data)
