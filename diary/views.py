@@ -2,14 +2,16 @@
 # coding: utf-8
 
 
-from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt, QVariant
+from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt, QVariant, QDate
 from sqlalchemy import inspect
+from datetime import date
 
 
 class SqlAlchemyQueryModel(QAbstractTableModel):
     def __init__(self, query, captions=None, parent=None):
         super(SqlAlchemyQueryModel, self).__init__(parent)
         # TODO: handle query.first() == None, when query has no results
+        # TODO: implement field selection through query
         self._fields = inspect(type(query.first())).columns.keys()
         self._captions = []
         if captions:
@@ -29,7 +31,16 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         return QVariant()
 
     def data(self, index, role=Qt.DisplayRole):
-        pass
+        if not index.isValid() or not (0 <= index.row() < len(self._data)):
+            return QVariant()
+        data = self._data[index.row()]
+        column = index.column()
+        if role == Qt.DisplayRole:
+            value = getattr(data, self._fields[column])
+            if isinstance(value, date):
+                value = QDate(value)
+            return QVariant(value)
+        return QVariant()
 
     def setData(self, index, value, role=Qt.EditRole):
         pass
