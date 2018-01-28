@@ -43,19 +43,13 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         return QVariant()
 
     def setData(self, index, value, role=Qt.EditRole):
-        pass
-
-    def insertRow(self, row, parent=QModelIndex(), *args, **kwargs):
-        pass
-
-    def insertRows(self, row, count, parent=QModelIndex(), *args, **kwargs):
-        pass
-
-    def removeRow(self, row, parent=None, *args, **kwargs):
-        pass
-
-    def removeRows(self, row, count, parent=None, *args, **kwargs):
-        pass
+        if not index.isValid() or not (0 <= index.row() < len(self._data)):
+            return False
+        data = self._data[index.row()]
+        # TODO: Handle special formats like dates
+        setattr(data, self._fields[index.column()], value)
+        self.dataChanged.emit(index, index)
+        return True
 
     def flags(self, index):
         return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
