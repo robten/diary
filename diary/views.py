@@ -46,8 +46,10 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         if not index.isValid() or not (0 <= index.row() < len(self._data)):
             return False
         data = self._data[index.row()]
-        # TODO: Handle special formats like dates
-        setattr(data, self._fields[index.column()], value)
+        element = value.value()
+        if isinstance(element, QDate):
+            element = value.value().toPyDate()
+        setattr(data, self._fields[index.column()], element)
         self.dataChanged.emit(index, index)
         return True
 
