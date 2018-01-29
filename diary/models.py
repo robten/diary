@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
+from datetime import date
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Table, Column, ForeignKey, Integer, String, Date, Text
 from sqlalchemy.orm import relationship
@@ -22,6 +23,11 @@ class Entry(Model):
     timestamp = Column(Date)
     files = relationship("File", secondary=entry_files, back_populates="entries")
 
+    def __init__(self, title, text, timestamp=date.today()):
+        self.title = title
+        self.text = text
+        self.timestamp = timestamp
+
     def __repr__(self):
         return "Entry(id={}, title='{}')".format(self.id, self.title)
 
@@ -34,6 +40,12 @@ class File(Model):
     type = Column(String(10))
     timestamp = Column(Date)
     entries = relationship("Entry", secondary=entry_files, back_populates="files")
+
+    def __init__(self, name, ftype, path="./", timestamp=date.today()):
+        self.name = name
+        self.type = ftype
+        self.subpath = path
+        self.timestamp = timestamp
 
     def __repr__(self):
         return "File(id={}, name='{}')".format(self.id, self.name)
