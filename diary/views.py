@@ -20,21 +20,29 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
             if column["expr"] is column["type"]:
                 # column is a model class
                 inspector = inspect(column["type"])
-                definition = {
-                    "type": "class",
-                    "name": inspector.class_.__name__,
-                    "class": inspector.class_,
-                    "columns": inspector.columns.keys(),
-                    "relations": inspector.relationships.keys()
-                }
-                self._fields.append(definition)
+                for attr in inspector.columns.keys():
+                    definition = {
+                        "type": "class_attr",
+                        "name": attr,
+                        "class": inspector.class_,
+                        "class_name": inspector.class_.__name__
+                    }
+                    self._fields.append(definition)
+                for relation in inspector.relationships.keys():
+                    definition = {
+                        "type": "class_relation",
+                        "name": relation,
+                        "class": inspector.class_,
+                        "class_name": inspector.class_.__name__
+                    }
+                    self._fields.append(definition)
             elif type(column["expr"]).__name__ == "InstrumentedAttribute":
                 # column is a selected Column from a Table
                 definition = {
-                    "type": "attribute",
+                    "type": "attr",
                     "name": column["name"],
-                    "class_name": column["entity"].__name__,
-                    "class": column["entity"]
+                    "class": column["entity"],
+                    "class_name": column["entity"].__name__
                 }
                 self._fields.append(definition)
             else:
