@@ -10,17 +10,40 @@ from datetime import date
 class SqlAlchemyQueryModel(QAbstractTableModel):
     def __init__(self, query, captions=None, parent=None):
         super(SqlAlchemyQueryModel, self).__init__(parent)
-        # TODO: handle query.first() == None, when query has no results
-        # TODO: implement field selection through query
-        self._fields = inspect(type(query.first())).columns.keys()
-        self._captions = []
+        if not type(query).__name__ == "Query":
+            raise TypeError("parameter query should be of type sqlalchemy.orm.query.Query")
+        self._query = query
+        self._data = self._query.all()
+        self._fields = list()
+        self._captions = list()
+        for column in self._query.column_descriptions:
+            if column["expr"] is column["type"]:
+                # column is a model class
+                inspector = inspect(column["type"])
+                definition = {
+                    "type": "class",
+                    "name": inspector.class_.__name__,
+                    "class": inspector.class_,
+                    "columns": inspector.columns.keys(),
+                    "relations": inspector.relationships.keys()
+                }
+                self._fields.append(definition)
+            elif type(column["expr"]).__name__ == "InstrumentedAttribute":
+                # column is a selected Column from a Table
+                definition = {
+                    "type": "attribute",
+                    "name": column["name"],
+                    "class_name": column["entity"].__name__,
+                    "class": column["entity"]
+                }
+                self._fields.append(definition)
+            else:
+                raise ValueError("parameter query only excepts tables or individual columns")
         if captions:
             if isinstance(captions, list):
                 self._captions = captions
             else:
-                raise ValueError("parameter column_names should be of type list()")
-        self._query = query
-        self._data = self._query.all()
+                raise TypeError("parameter captions should be of type list()")
 
     def headerData(self, column, orientation=Qt.Horizontal, role=Qt.DisplayRole):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole and column < len(self._fields):
