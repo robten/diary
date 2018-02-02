@@ -20,6 +20,7 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
             self._result_collection = True
         else:
             self._result_collection = False
+        column_count = 0
         for column in self._query.column_descriptions:
             if column["expr"] is column["type"]:
                 # column is a model class
@@ -29,7 +30,8 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
                         "type": "class_attr",
                         "name": attr,
                         "class": inspector.class_,
-                        "class_name": inspector.class_.__name__
+                        "class_name": inspector.class_.__name__,
+                        "result_position": column_count
                     }
                     self._fields.append(definition)
                 for relation in inspector.relationships.keys():
@@ -37,7 +39,8 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
                         "type": "class_relation",
                         "name": relation,
                         "class": inspector.class_,
-                        "class_name": inspector.class_.__name__
+                        "class_name": inspector.class_.__name__,
+                        "result_position": column_count
                     }
                     self._fields.append(definition)
             elif type(column["expr"]).__name__ == "InstrumentedAttribute":
@@ -46,11 +49,13 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
                     "type": "attr",
                     "name": column["name"],
                     "class": column["entity"],
-                    "class_name": column["entity"].__name__
+                    "class_name": column["entity"].__name__,
+                    "result_position": column_count
                 }
                 self._fields.append(definition)
             else:
                 raise ValueError("parameter query only excepts tables or individual columns")
+            column_count += 1
         if captions:
             if isinstance(captions, list):
                 self._captions = captions
@@ -71,8 +76,21 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
             return QVariant()
         data = self._data[index.row()]
         column = index.column()
+        value = None
         if role == Qt.DisplayRole:
-            value = getattr(data, self._fields[column])
+            if self._result_collection:
+                # handle collections returned by query
+                if self._fields[column]["type"] == "class_attr":
+                    model_obj = data[self._fields[column]["result_position"]]
+                    value = getattr(model_obj, self._fields[column]["name"])
+                if self._fields[column]["type"] == "attr":
+                    value = data[self._fields[column]["result_position"]]
+                if self._fields[column]["type"] == "class_relation":
+                    value = "-relationship-"  # TODO: Handle representation of relationships
+            else:
+                # handle single result (only possible, when a single model class was queried for
+                value = getattr(data, self._fields[column]["name"])
+            # Checking value or _fields type for individual type representation:
             if isinstance(value, date):
                 value = QDate(value)
             return QVariant(value)
