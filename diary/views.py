@@ -62,7 +62,8 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
             if column < len(self._captions):
                 return QVariant(self._captions[column])
             else:
-                return QVariant(self._fields[column])
+                return QVariant("{}.{}".format(self._fields[column]["class_name"],
+                                               self._fields[column]["name"]))
         return QVariant()
 
     def data(self, index, role=Qt.DisplayRole):
