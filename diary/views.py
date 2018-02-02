@@ -16,6 +16,10 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         self._data = self._query.all()
         self._fields = list()
         self._captions = list()
+        if type(self._data[0]).__name__ == "result":
+            self._result_collection = True
+        else:
+            self._result_collection = False
         for column in self._query.column_descriptions:
             if column["expr"] is column["type"]:
                 # column is a model class
