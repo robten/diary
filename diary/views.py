@@ -127,7 +127,11 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
             return False
 
     def flags(self, index):
-        return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
+        column = index.column()
+        if self._fields[column]["type"] == "class_attr":
+            return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
+        else:
+            return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
     def columnCount(self, parent=QModelIndex(), *args, **kwargs):
         return len(self._fields)
