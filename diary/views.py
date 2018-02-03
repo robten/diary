@@ -89,7 +89,10 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
                     value = "-relationship-"  # TODO: Handle representation of relationships
             else:
                 # handle single result (only possible, when a single model class was queried for
-                value = getattr(data, self._fields[column]["name"])
+                if self._fields[column]["type"] == "class_relation":
+                    value = "-relationship-"  # FIXME: Try to get rid of the duplication
+                else:
+                    value = getattr(data, self._fields[column]["name"])
             # Checking value or _fields type for individual type representation:
             if isinstance(value, date):
                 value = QDate(value)
@@ -97,28 +100,31 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         return QVariant()
 
     def setData(self, index, value, role=Qt.EditRole):
-        if not index.isValid() or not (0 <= index.row() < len(self._data)):
-            return False
-        data = self._data[index.row()]
-        column = index.column()
-        element = value.value()  # FIXME: must be bug, because value should be QVariant not str
-        if isinstance(element, QDate):
-            element = value.value().toPyDate()
-        if self._result_collection:
-            # handle collections returned by query
-            if self._fields[column]["type"] == "class_attr":
-                model_obj = data[self._fields[column]["result_position"]]
-                setattr(model_obj, self._fields[column]["name"], element)
-            if self._fields[column]["type"] == "attr":
-                # data[self._fields[column]["result_position"]] = element
-                pass  # TODO: Handle editing for single columns (not easy in SqlAlchemy)
-            if self._fields[column]["type"] == "class_relation":
-                pass  # TODO: Handle editing of relationships
+        if role == Qt.EditRole:
+            if not index.isValid() or not (0 <= index.row() < len(self._data)):
+                return False
+            data = self._data[index.row()]
+            column = index.column()
+            element = value  # FIXME: must be bug, because value should be QVariant not str
+            if isinstance(element, QDate):  # FIXME: won't work with plain str
+                element = value.toPyDate()
+            if self._result_collection:
+                # handle collections returned by query
+                if self._fields[column]["type"] == "class_attr":
+                    model_obj = data[self._fields[column]["result_position"]]
+                    setattr(model_obj, self._fields[column]["name"], element)
+                if self._fields[column]["type"] == "attr":
+                    # data[self._fields[column]["result_position"]] = element
+                    pass  # TODO: Handle editing for single columns (not easy in SqlAlchemy)
+                if self._fields[column]["type"] == "class_relation":
+                    pass  # TODO: Handle editing of relationships
+            else:
+                # handle single result (only possible, when a single model class was queried for
+                setattr(data, self._fields[column]["name"], element)
+            self.dataChanged.emit(index, index, (Qt.EditRole,))
+            return True
         else:
-            # handle single result (only possible, when a single model class was queried for
-            setattr(data, self._fields[column]["name"], element)
-        self.dataChanged.emit(index, index)
-        return True
+            return False
 
     def flags(self, index):
         return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
