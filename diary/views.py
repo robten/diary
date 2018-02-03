@@ -100,10 +100,23 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         if not index.isValid() or not (0 <= index.row() < len(self._data)):
             return False
         data = self._data[index.row()]
-        element = value.value()
+        column = index.column()
+        element = value.value()  # FIXME: must be bug, because value should be QVariant not str
         if isinstance(element, QDate):
             element = value.value().toPyDate()
-        setattr(data, self._fields[index.column()], element)
+        if self._result_collection:
+            # handle collections returned by query
+            if self._fields[column]["type"] == "class_attr":
+                model_obj = data[self._fields[column]["result_position"]]
+                setattr(model_obj, self._fields[column]["name"], element)
+            if self._fields[column]["type"] == "attr":
+                # data[self._fields[column]["result_position"]] = element
+                pass  # TODO: Handle editing for single columns (not easy in SqlAlchemy)
+            if self._fields[column]["type"] == "class_relation":
+                pass  # TODO: Handle editing of relationships
+        else:
+            # handle single result (only possible, when a single model class was queried for
+            setattr(data, self._fields[column]["name"], element)
         self.dataChanged.emit(index, index)
         return True
 
