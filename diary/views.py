@@ -8,14 +8,14 @@ from datetime import date
 
 
 class SqlAlchemyQueryModel(QAbstractTableModel):
-    def __init__(self, query, captions=None, parent=None):
+    def __init__(self, query, parent=None):
         super(SqlAlchemyQueryModel, self).__init__(parent)
         if not type(query).__name__ == "Query":
             raise TypeError("parameter query should be of type sqlalchemy.orm.query.Query")
         self._query = query
         self._data = self._query.all()
         self._fields = list()
-        self._captions = list()
+        self._header_data = dict()
         if type(self._data[0]).__name__ == "result":
             self._result_collection = True
         else:
@@ -56,20 +56,19 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
             else:
                 raise ValueError("parameter query only excepts tables or individual columns")
             column_count += 1
-        if captions:
-            if isinstance(captions, list):
-                self._captions = captions
-            else:
-                raise TypeError("parameter captions should be of type list()")
 
     def headerData(self, column, orientation=Qt.Horizontal, role=Qt.DisplayRole):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole and column < len(self._fields):
-            if column < len(self._captions):
-                return QVariant(self._captions[column])
-            else:
-                return QVariant("{}.{}".format(self._fields[column]["class_name"],
-                                               self._fields[column]["name"]))
+            if column in self._header_data:
+                if self._header_data[column]["orientation"] == Qt.Horizontal:
+                    return self._header_data[column]["caption"]
+            return QVariant("{}.{}".format(self._fields[column]["class_name"],
+                                           self._fields[column]["name"]))
         return QVariant()
+
+    def setHeaderData(self, column, orientation, caption, role=None):
+        self._header_data[column] = {"caption": caption,
+                                     "orientation": orientation}
 
     def data(self, index, role=Qt.DisplayRole):
         if not index.isValid() or not (0 <= index.row() < len(self._data)):
