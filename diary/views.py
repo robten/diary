@@ -57,6 +57,25 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
                 raise ValueError("parameter query only excepts tables or individual columns")
             column_count += 1
 
+    def _list_relations(self, index):
+        column = index.column()
+        if self._fields[column]["type"] != "class_relation":
+            raise ValueError("Column {} has no relations to display.".format(column))
+        position = self._fields[column]["result_position"]
+        collection = self._fields[column]["name"]
+        row = index.row()
+        if self._result_collection:
+            data = getattr(self._data[row][position], collection)
+        else:
+            data = getattr(self._data[row], collection)
+        if len(data) == 0:  # no relations for this item to display
+            return ""
+        primay_key = inspect(type(data[0])).primary_key[0].name
+        relation_list = list()
+        for related_obj in data:
+            relation_list.append(str(getattr(related_obj, primay_key)))
+        return ", ".join(relation_list)
+
     def headerData(self, column, orientation=Qt.Horizontal, role=Qt.DisplayRole):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole and column < len(self._fields):
             if column in self._header_data:
@@ -85,11 +104,11 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
                 if self._fields[column]["type"] == "attr":
                     value = data[self._fields[column]["result_position"]]
                 if self._fields[column]["type"] == "class_relation":
-                    value = "-relationship-"  # TODO: Handle representation of relationships
+                    value = self._list_relations(index)
             else:
                 # handle single result (only possible, when a single model class was queried for
                 if self._fields[column]["type"] == "class_relation":
-                    value = "-relationship-"  # FIXME: Try to get rid of the duplication
+                    value = self._list_relations(index)
                 else:
                     value = getattr(data, self._fields[column]["name"])
             # Checking value or _fields type for individual type representation:
