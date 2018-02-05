@@ -74,11 +74,29 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
             data = getattr(self._data[row], collection)
         if len(data) == 0:  # no relations for this item to display
             return ""
-        primay_key = inspect(type(data[0])).primary_key[0].name
+        if "relation_key" in self._fields[column]:
+            primay_key = self._fields[column]["relation_key"]
+        else:
+            primay_key = inspect(type(data[0])).primary_key[0].name
         relation_list = list()
         for related_obj in data:
             relation_list.append(str(getattr(related_obj, primay_key)))
         return ", ".join(relation_list)
+
+    def set_relation_display(self, collection, key):
+        """
+        Method offers to set the key that will be displayed in the list showing the collection
+        (relation inside a SqlAlchemy model class). If not set explicitly the list will display
+        the primary key of the related model class (see _list_relations()).
+        :param str collection: Name of the relation collection in the refering model class
+        :param str key: Name of the key in the related model class
+        """
+        for field in self._fields:
+            if field["name"] == collection and field["type"] == "class_relation":
+                field["relation_key"] = key
+                return
+        raise ValueError("Collection '{}' was not found in query or is no 'class_relation'."
+                         .format(collection))
 
     def headerData(self, column, orientation=Qt.Horizontal, role=Qt.DisplayRole):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole and column < len(self._fields):
