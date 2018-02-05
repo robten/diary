@@ -16,10 +16,14 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         self._data = self._query.all()
         self._fields = list()
         self._header_data = dict()
+        self._result_is_collection = False  # query result could be single model class or collection
+        self._analyse_data()
+
+    def _analyse_data(self):
         if type(self._data[0]).__name__ == "result":
-            self._result_collection = True
+            self._result_is_collection = True
         else:
-            self._result_collection = False
+            self._result_is_collection = False
         column_count = 0
         for column in self._query.column_descriptions:
             if column["expr"] is column["type"]:
@@ -64,7 +68,7 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         position = self._fields[column]["result_position"]
         collection = self._fields[column]["name"]
         row = index.row()
-        if self._result_collection:
+        if self._result_is_collection:
             data = getattr(self._data[row][position], collection)
         else:
             data = getattr(self._data[row], collection)
@@ -96,7 +100,7 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         column = index.column()
         value = None
         if role == Qt.DisplayRole:
-            if self._result_collection:
+            if self._result_is_collection:
                 # handle collections returned by query
                 if self._fields[column]["type"] == "class_attr":
                     model_obj = data[self._fields[column]["result_position"]]
@@ -126,7 +130,7 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
             element = value  # FIXME: must be bug, because value should be QVariant not str
             if isinstance(element, QDate):  # FIXME: won't work with plain str
                 element = value.toPyDate()
-            if self._result_collection:
+            if self._result_is_collection:
                 # handle collections returned by query
                 if self._fields[column]["type"] == "class_attr":
                     model_obj = data[self._fields[column]["result_position"]]
