@@ -13,11 +13,11 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         if not type(query).__name__ == "Query":
             raise TypeError("parameter query should be of type sqlalchemy.orm.query.Query")
         self._query = query
-        self._data = self._query.all()
+        self._data = list()
         self._fields = list()
         self._header_data = dict()
         self._result_is_collection = False  # query result could be single model class or collection
-        self._analyse_data()
+        self.load()
 
     def _analyse_data(self):
         if type(self._data[0]).__name__ == "result":
@@ -98,6 +98,13 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         raise ValueError("Collection '{}' was not found in query or is no 'class_relation'."
                          .format(collection))
 
+    def load(self):
+        self._data = self._query.all()
+        self._analyse_data()
+
+    def save(self):
+        self._query.session.commit()
+
     def headerData(self, column, orientation=Qt.Horizontal, role=Qt.DisplayRole):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole and column < len(self._fields):
             if column in self._header_data:
@@ -161,6 +168,7 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
             else:
                 # handle single result (only possible, when a single model class was queried for
                 setattr(data, self._fields[column]["name"], element)
+            self.save()
             self.dataChanged.emit(index, index, (Qt.EditRole,))
             return True
         else:
