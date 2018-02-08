@@ -17,6 +17,7 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         self._fields = list()
         self._header_data = dict()
         self._result_is_collection = False  # query result could be single model class or collection
+        self._v_header_enabled = False  # whether model displays vertical headers (row numbers)
         self.load()
 
     def _analyse_data(self):
@@ -105,13 +106,18 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
     def save(self):
         self._query.session.commit()
 
-    def headerData(self, column, orientation=Qt.Horizontal, role=Qt.DisplayRole):
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole and column < len(self._fields):
-            if column in self._header_data:
-                if self._header_data[column]["orientation"] == Qt.Horizontal:
-                    return self._header_data[column]["caption"]
-            return QVariant("{}.{}".format(self._fields[column]["class_name"],
-                                           self._fields[column]["name"]))
+    def vertical_headers_enabled(self, status=True):
+        self._v_header_enabled = status
+
+    def headerData(self, section, orientation=Qt.Horizontal, role=Qt.DisplayRole):
+        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+            if section in self._header_data:
+                if self._header_data[section]["orientation"] == Qt.Horizontal:
+                    return self._header_data[section]["caption"]
+            return QVariant("{}.{}".format(self._fields[section]["class_name"],
+                                           self._fields[section]["name"]))
+        elif orientation == Qt.Vertical and role == Qt.DisplayRole and self._v_header_enabled:
+            return QVariant(int(section) + 1)
         return QVariant()
 
     def setHeaderData(self, column, orientation, caption, role=None):
