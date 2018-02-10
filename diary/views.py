@@ -2,7 +2,8 @@
 # coding: utf-8
 
 
-from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt, QVariant, QDate
+from PyQt5.QtCore import QAbstractTableModel, QSortFilterProxyModel, QModelIndex, Qt, QVariant,\
+    QDate
 from sqlalchemy import inspect
 from datetime import date
 
@@ -192,3 +193,18 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
 
     def rowCount(self, parent=QModelIndex(), *args, **kwargs):
         return len(self._data)
+
+
+class SortFilterModel(QSortFilterProxyModel):
+    def __init__(self, parent=None):
+        super(SortFilterModel, self).__init__(parent)
+        self._keep_vheader_order = True
+
+    def keep_vertical_header_order(self, status=True):
+        self._keep_vheader_order = status
+
+    def headerData(self, section, orientation=Qt.Horizontal, role=Qt.DisplayRole):
+        if self._keep_vheader_order:
+            if orientation == Qt.Vertical and role == Qt.DisplayRole:
+                return self.sourceModel().headerData(section, orientation, role)
+        return super(SortFilterModel, self).headerData(section, orientation, role)
