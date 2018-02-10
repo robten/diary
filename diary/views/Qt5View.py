@@ -37,6 +37,7 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
                         "name": attr,
                         "class": inspector.class_,
                         "class_name": inspector.class_.__name__,
+                        "column_type": inspector.columns[attr].type,
                         "result_position": column_count
                     }
                     self._fields.append(definition)
@@ -56,6 +57,7 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
                     "name": column["name"],
                     "class": column["entity"],
                     "class_name": column["entity"].__name__,
+                    "column_type": column["type"],
                     "result_position": column_count
                 }
                 self._fields.append(definition)
@@ -150,6 +152,7 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
             # Checking value or _fields type for individual type representation:
             if isinstance(value, date):
                 value = QDate(value)
+            # print("data() gives: value: {},  type: {}.".format(value, type(value)))
             return QVariant(value)
         return QVariant()
 
@@ -159,6 +162,7 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
                 return False
             data = self._data[index.row()]
             column = index.column()
+            # print("setData() gets: value: {},  type: {}.".format(value, type(value)))
             element = value  # FIXME: must be bug, because value should be QVariant not str
             if isinstance(element, QDate):  # FIXME: won't work with plain str
                 element = value.toPyDate()
