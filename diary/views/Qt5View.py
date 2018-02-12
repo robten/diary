@@ -2,8 +2,7 @@
 # coding: utf-8
 
 
-from PyQt5.QtCore import QAbstractTableModel, QSortFilterProxyModel, QModelIndex, Qt, QVariant,\
-    QDate
+from PyQt5.QtCore import QAbstractTableModel, QSortFilterProxyModel, QModelIndex, Qt, QDate
 from sqlalchemy import inspect
 from datetime import date
 
@@ -15,10 +14,10 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
             raise TypeError("parameter query should be of type sqlalchemy.orm.query.Query")
         self._query = query
         self._data = list()
-        self._fields = list()
         self._header_data = dict()
         self._result_is_collection = False  # query result could be single model class or collection
         self._v_header_enabled = False  # whether model displays vertical headers (row numbers)
+        self.meta_columns = list()  # Description of all columns in query result
         self.load()
 
     def _analyse_data(self):
@@ -40,7 +39,7 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
                         "column_type": inspector.columns[attr].type,
                         "result_position": column_count
                     }
-                    self._fields.append(definition)
+                    self.meta_columns.append(definition)
                 for relation in inspector.relationships.keys():
                     definition = {
                         "type": "class_relation",
@@ -49,7 +48,7 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
                         "class_name": inspector.class_.__name__,
                         "result_position": column_count
                     }
-                    self._fields.append(definition)
+                    self.meta_columns.append(definition)
             elif type(column["expr"]).__name__ == "InstrumentedAttribute":
                 # column is a selected Column from a Table
                 definition = {
@@ -60,17 +59,17 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
                     "column_type": column["type"],
                     "result_position": column_count
                 }
-                self._fields.append(definition)
+                self.meta_columns.append(definition)
             else:
                 raise ValueError("parameter query only excepts tables or individual columns")
             column_count += 1
 
     def _list_relations(self, index):
         column = index.column()
-        if self._fields[column]["type"] != "class_relation":
+        if self.meta_columns[column]["type"] != "class_relation":
             raise ValueError("Column {} has no relations to display.".format(column))
-        position = self._fields[column]["result_position"]
-        collection = self._fields[column]["name"]
+        position = self.meta_columns[column]["result_position"]
+        collection = self.meta_columns[column]["name"]
         row = index.row()
         if self._result_is_collection:
             data = getattr(self._data[row][position], collection)
@@ -78,8 +77,8 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
             data = getattr(self._data[row], collection)
         if len(data) == 0:  # no relations for this item to display
             return ""
-        if "relation_key" in self._fields[column]:
-            primay_key = self._fields[column]["relation_key"]
+        if "relation_key" in self.meta_columns[column]:
+            primay_key = self.meta_columns[column]["relation_key"]
         else:
             primay_key = inspect(type(data[0])).primary_key[0].name
         relation_list = list()
@@ -95,7 +94,7 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         :param str collection: Name of the relation collection in the refering model class
         :param str key: Name of the key in the related model class
         """
-        for field in self._fields:
+        for field in self.meta_columns:
             if field["name"] == collection and field["type"] == "class_relation":
                 field["relation_key"] = key
                 return
@@ -117,11 +116,11 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
             if section in self._header_data:
                 if self._header_data[section]["orientation"] == Qt.Horizontal:
                     return self._header_data[section]["caption"]
-            return QVariant("{}.{}".format(self._fields[section]["class_name"],
-                                           self._fields[section]["name"]))
+            return "{}.{}".format(self.meta_columns[section]["class_name"],
+                                  self.meta_columns[section]["name"])
         elif orientation == Qt.Vertical and role == Qt.DisplayRole and self._v_header_enabled:
-            return QVariant(int(section) + 1)
-        return QVariant()
+            return int(section) + 1
+        return None
 
     def setHeaderData(self, column, orientation, caption, role=None):
         self._header_data[column] = {"caption": caption,
@@ -129,32 +128,31 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
 
     def data(self, index, role=Qt.DisplayRole):
         if not index.isValid() or not (0 <= index.row() < len(self._data)):
-            return QVariant()
+            return None
         data = self._data[index.row()]
         column = index.column()
         value = None
-        if role == Qt.DisplayRole:
+        if role in (Qt.DisplayRole, Qt.EditRole):
             if self._result_is_collection:
                 # handle collections returned by query
-                if self._fields[column]["type"] == "class_attr":
-                    model_obj = data[self._fields[column]["result_position"]]
-                    value = getattr(model_obj, self._fields[column]["name"])
-                if self._fields[column]["type"] == "attr":
-                    value = data[self._fields[column]["result_position"]]
-                if self._fields[column]["type"] == "class_relation":
+                if self.meta_columns[column]["type"] == "class_attr":
+                    model_obj = data[self.meta_columns[column]["result_position"]]
+                    value = getattr(model_obj, self.meta_columns[column]["name"])
+                if self.meta_columns[column]["type"] == "attr":
+                    value = data[self.meta_columns[column]["result_position"]]
+                if self.meta_columns[column]["type"] == "class_relation":
                     value = self._list_relations(index)
             else:
                 # handle single result (only possible, when a single model class was queried for
-                if self._fields[column]["type"] == "class_relation":
+                if self.meta_columns[column]["type"] == "class_relation":
                     value = self._list_relations(index)
                 else:
-                    value = getattr(data, self._fields[column]["name"])
-            # Checking value or _fields type for individual type representation:
+                    value = getattr(data, self.meta_columns[column]["name"])
+            # Checking value or meta_columns type for individual type representation:
             if isinstance(value, date):
                 value = QDate(value)
-            # print("data() gives: value: {},  type: {}.".format(value, type(value)))
-            return QVariant(value)
-        return QVariant()
+            return value
+        return None
 
     def setData(self, index, value, role=Qt.EditRole):
         if role == Qt.EditRole:
@@ -162,23 +160,21 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
                 return False
             data = self._data[index.row()]
             column = index.column()
-            # print("setData() gets: value: {},  type: {}.".format(value, type(value)))
-            element = value  # FIXME: must be bug, because value should be QVariant not str
-            if isinstance(element, QDate):  # FIXME: won't work with plain str
-                element = value.toPyDate()
+            if isinstance(value, QDate):
+                value = value.toPyDate()
             if self._result_is_collection:
                 # handle collections returned by query
-                if self._fields[column]["type"] == "class_attr":
-                    model_obj = data[self._fields[column]["result_position"]]
-                    setattr(model_obj, self._fields[column]["name"], element)
-                if self._fields[column]["type"] == "attr":
-                    # data[self._fields[column]["result_position"]] = element
+                if self.meta_columns[column]["type"] == "class_attr":
+                    model_obj = data[self.meta_columns[column]["result_position"]]
+                    setattr(model_obj, self.meta_columns[column]["name"], value)
+                if self.meta_columns[column]["type"] == "attr":
+                    # data[self.meta_columns[column]["result_position"]] = element
                     pass  # TODO: Handle editing for single columns (not easy in SqlAlchemy)
-                if self._fields[column]["type"] == "class_relation":
+                if self.meta_columns[column]["type"] == "class_relation":
                     pass  # TODO: Handle editing of relationships
             else:
                 # handle single result (only possible, when a single model class was queried for
-                setattr(data, self._fields[column]["name"], element)
+                setattr(data, self.meta_columns[column]["name"], value)
             self.save()
             self.dataChanged.emit(index, index, (Qt.EditRole,))
             return True
@@ -187,13 +183,13 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
 
     def flags(self, index):
         column = index.column()
-        if self._fields[column]["type"] == "class_attr":
+        if self.meta_columns[column]["type"] == "class_attr":
             return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
         else:
             return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
     def columnCount(self, parent=QModelIndex(), *args, **kwargs):
-        return len(self._fields)
+        return len(self.meta_columns)
 
     def rowCount(self, parent=QModelIndex(), *args, **kwargs):
         return len(self._data)
