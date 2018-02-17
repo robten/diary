@@ -11,7 +11,7 @@ Model = declarative_base()
 
 
 entry_files = Table("entry_files", Model.metadata,
-                    Column("post_id", ForeignKey("entries.id"), primary_key=True),
+                    Column("entry_id", ForeignKey("entries.id"), primary_key=True),
                     Column("file_id", ForeignKey("files.id"), primary_key=True))
 
 
