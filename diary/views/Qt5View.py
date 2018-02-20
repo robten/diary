@@ -3,6 +3,7 @@
 
 
 from PyQt5.QtCore import QAbstractTableModel, QSortFilterProxyModel, QModelIndex, Qt, QDate
+from PyQt5.QtWidgets import *
 from sqlalchemy import inspect
 from datetime import date
 
@@ -208,3 +209,40 @@ class SortFilterModel(QSortFilterProxyModel):
             if orientation == Qt.Vertical and role == Qt.DisplayRole:
                 return self.sourceModel().headerData(section, orientation, role)
         return super(SortFilterModel, self).headerData(section, orientation, role)
+
+
+class DisplayWidget(QWidget):
+    def __init__(self, parent=None):
+        super(DisplayWidget, self).__init__(parent)
+        self.entry_display = QTableView()
+        self.title_edit = QLineEdit()
+        self.text_edit = QTextEdit()
+        title_label = QLabel("&Title:")
+        title_label.setBuddy(self.title_edit)
+        text_label = QLabel("T&ext:")
+        text_label.setBuddy(self.text_edit)
+
+        # Layout
+        main_layout = QVBoxLayout(self)
+        sub_layout = QGridLayout(self)
+        sub_layout.addWidget(title_label, 0, 0)
+        sub_layout.addWidget(self.title_edit, 0, 1)
+        sub_layout.addWidget(text_label, 1, 0, Qt.AlignTop)
+        sub_layout.addWidget(self.text_edit, 1, 1)
+        main_layout.addWidget(self.entry_display)
+        main_layout.addLayout(sub_layout)
+        self.setLayout(main_layout)
+
+
+class DiaryViewer(QMainWindow):
+    def __init__(self, parent=None):
+        super(DiaryViewer, self).__init__(parent)
+
+        # View
+        central_widget = DisplayWidget(self)
+        central_widget.entry_display.hideColumn(0)
+        central_widget.entry_display.horizontalHeader().setStretchLastSection(True)
+        central_widget.entry_display.resizeColumnsToContents()
+        self.setCentralWidget(central_widget)
+        self.setGeometry(200, 20, 1500, 1000)
+        self.setWindowTitle("Diary")
