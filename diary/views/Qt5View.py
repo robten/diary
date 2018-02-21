@@ -212,11 +212,15 @@ class SortFilterModel(QSortFilterProxyModel):
 
 
 class DisplayWidget(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, model, parent=None):
         super(DisplayWidget, self).__init__(parent)
         self.entry_display = QTableView()
         self.title_edit = QLineEdit()
         self.text_edit = QTextEdit()
+        self.mapper = QDataWidgetMapper()
+        self.setModel(model)
+        self.mapper.addMapping(self.title_edit, 1)
+        self.mapper.addMapping(self.text_edit, 2)
         title_label = QLabel("&Title:")
         title_label.setBuddy(self.title_edit)
         text_label = QLabel("T&ext:")
@@ -232,6 +236,17 @@ class DisplayWidget(QWidget):
         main_layout.addWidget(self.entry_display)
         main_layout.addLayout(sub_layout)
         self.setLayout(main_layout)
+
+        # Connections
+        self.entry_display.selectionModel().currentRowChanged.connect(
+            self.mapper.setCurrentModelIndex)
+
+    def setModel(self, model):
+        self.entry_display.setModel(model)
+        self.mapper.setModel(model)
+
+    def model(self):
+        return self.entry_display.model()
 
 
 class DiaryViewer(QMainWindow):
