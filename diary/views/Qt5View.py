@@ -17,7 +17,7 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         self._data = list()
         self._header_data = dict()
         self._result_is_collection = False  # query result could be single model class or collection
-        self._v_header_enabled = False  # whether model displays vertical headers (row numbers)
+        self._vheader_enabled = False  # whether model displays vertical headers (row numbers)
         self.meta_columns = list()  # Description of all columns in query result
         self.load()
 
@@ -79,12 +79,12 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         if len(data) == 0:  # no relations for this item to display
             return ""
         if "relation_key" in self.meta_columns[column]:
-            primay_key = self.meta_columns[column]["relation_key"]
+            primary_key = self.meta_columns[column]["relation_key"]
         else:
-            primay_key = inspect(type(data[0])).primary_key[0].name
+            primary_key = inspect(type(data[0])).primary_key[0].name
         relation_list = list()
         for related_obj in data:
-            relation_list.append(str(getattr(related_obj, primay_key)))
+            relation_list.append(str(getattr(related_obj, primary_key)))
         return ", ".join(relation_list)
 
     def set_relation_display(self, collection, key):
@@ -110,7 +110,7 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         self._query.session.commit()
 
     def vertical_headers_enabled(self, status=True):
-        self._v_header_enabled = status
+        self._vheader_enabled = status
 
     def headerData(self, section, orientation=Qt.Horizontal, role=Qt.DisplayRole):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
@@ -119,7 +119,7 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
                     return self._header_data[section]["caption"]
             return "{}.{}".format(self.meta_columns[section]["class_name"],
                                   self.meta_columns[section]["name"])
-        elif orientation == Qt.Vertical and role == Qt.DisplayRole and self._v_header_enabled:
+        elif orientation == Qt.Vertical and role == Qt.DisplayRole and self._vheader_enabled:
             return int(section) + 1
         return None
 
