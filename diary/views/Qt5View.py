@@ -182,6 +182,29 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         else:
             return False
 
+    def insertRows(self, row, count, parent=QModelIndex(), *args, **kwargs):
+        if count > 1 or row > self.rowCount():
+            return False
+        column_types = list()
+        for column in self.meta_columns:
+            if column["type"] == "class_attr" and column["class"] not in column_types:
+                column_types.append(column["class"])
+        if 0 < len(column_types) < 2:
+            new_row = column_types[0]()
+        elif 0 < len(column_types) >= 2:
+            new_row = tuple(type_() for type_ in column_types)
+        else:
+            return False
+        self.beginInsertRows(parent, row, row + count - 1)
+        if row < self.rowCount():
+            self._data.insert(row, new_row)
+            self._query.session.add_all(new_row)
+        elif row == self.rowCount():
+            self._data.append(new_row)
+            self._query.session.add(new_row)
+        self.endInsertRows()
+        return True
+
     def flags(self, index):
         column = index.column()
         if self.meta_columns[column]["type"] == "class_attr":
