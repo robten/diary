@@ -214,13 +214,13 @@ class SortFilterModel(QSortFilterProxyModel):
 class DisplayWidget(QWidget):
     def __init__(self, model, parent=None):
         super(DisplayWidget, self).__init__(parent)
+        self._last_index = None
         self.entry_display = QTableView()
         self.title_edit = QLineEdit()
         self.text_edit = QTextEdit()
         self.mapper = QDataWidgetMapper()
         self.setModel(model)
-        self.mapper.addMapping(self.title_edit, 1)
-        self.mapper.addMapping(self.text_edit, 2)
+        self.enable_mapping()
         title_label = QLabel("&Title:")
         title_label.setBuddy(self.title_edit)
         text_label = QLabel("T&ext:")
@@ -240,6 +240,18 @@ class DisplayWidget(QWidget):
         # Connections
         self.entry_display.selectionModel().currentRowChanged.connect(
             self.mapper.setCurrentModelIndex)
+
+    def enable_mapping(self):
+        self.mapper.addMapping(self.title_edit, 1)
+        self.mapper.addMapping(self.text_edit, 2)
+        if self._last_index:
+            self.mapper.setCurrentIndex(self._last_index)
+
+    def disable_mapping(self):
+        self._last_index = self.mapper.currentIndex()
+        self.mapper.clearMapping()
+        self.title_edit.clear()
+        self.text_edit.clear()
 
     def setModel(self, model):
         self.entry_display.setModel(model)
