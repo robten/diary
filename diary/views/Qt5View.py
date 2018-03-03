@@ -198,9 +198,11 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         self.beginInsertRows(parent, row, row + count - 1)
         if row < self.rowCount():
             self._data.insert(row, new_row)
-            self._query.session.add_all(new_row)
         elif row == self.rowCount():
             self._data.append(new_row)
+        if isinstance(new_row, tuple):
+            self._query.session.add_all(new_row)
+        else:
             self._query.session.add(new_row)
         self.endInsertRows()
         return True
@@ -278,6 +280,7 @@ class DisplayWidget(QWidget):
         # Connections
         self.entry_display.selectionModel().currentRowChanged.connect(
             self.mapper.setCurrentModelIndex)
+        self.add_button.pressed.connect(self.add_pressed)
 
     def enable_mapping(self):
         self.mapper.addMapping(self.title_edit, 1)
@@ -297,6 +300,12 @@ class DisplayWidget(QWidget):
 
     def model(self):
         return self.entry_display.model()
+
+    def add_pressed(self):
+        model = self.model()
+        row = self.mapper.currentIndex()
+        model.insertRow(row)
+        self.mapper.setCurrentIndex(row)
 
 
 class DiaryViewer(QMainWindow):
