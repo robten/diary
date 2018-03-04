@@ -264,6 +264,7 @@ class DisplayWidget(QWidget):
         self.setModel(model)
         self.enable_mapping()
         self.entry_display.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.entry_display.setEditTriggers(QAbstractItemView.NoEditTriggers)
         title_label = QLabel("&Title:")
         title_label.setBuddy(self.title_edit)
         text_label = QLabel("T&ext:")
