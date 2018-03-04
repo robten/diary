@@ -2,7 +2,8 @@
 # coding: utf-8
 
 
-from PyQt5.QtCore import QAbstractTableModel, QSortFilterProxyModel, QModelIndex, Qt, QDate
+from PyQt5.QtCore import QAbstractTableModel, QSortFilterProxyModel, QModelIndex, Qt, QDate,\
+    QItemSelectionModel
 from PyQt5.QtWidgets import *
 from sqlalchemy import inspect
 from datetime import date
@@ -18,6 +19,7 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         self._header_data = dict()
         self._result_is_collection = False  # query result could be single model class or collection
         self._vheader_enabled = False  # whether model displays vertical headers (row numbers)
+        self._last_insert = QModelIndex()
         self.meta_columns = list()  # Description of all columns in query result
         self.load()
 
@@ -112,6 +114,9 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
     def vertical_headers_enabled(self, status=True):
         self._vheader_enabled = status
 
+    def inserted_index(self):
+        return self._last_insert
+
     def headerData(self, section, orientation=Qt.Horizontal, role=Qt.DisplayRole):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             if section in self._header_data:
@@ -196,6 +201,7 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         else:
             return False
         self.beginInsertRows(parent, row, row + count - 1)
+        self._last_insert = self.index(row, 0)
         if row < self.rowCount():
             self._data.insert(row, new_row)
         elif row == self.rowCount():
@@ -229,6 +235,10 @@ class SortFilterModel(QSortFilterProxyModel):
     def keep_vertical_header_order(self, status=True):
         self._keep_vheader_order = status
 
+    def inserted_index(self):
+        source_index = self.sourceModel().inserted_index()
+        return self.mapFromSource(source_index)
+
     def headerData(self, section, orientation=Qt.Horizontal, role=Qt.DisplayRole):
         if self._keep_vheader_order:
             if orientation == Qt.Vertical and role == Qt.DisplayRole:
@@ -252,6 +262,7 @@ class DisplayWidget(QWidget):
         self.mapper = QDataWidgetMapper()
         self.setModel(model)
         self.enable_mapping()
+        self.entry_display.setSelectionBehavior(QAbstractItemView.SelectRows)
         title_label = QLabel("&Title:")
         title_label.setBuddy(self.title_edit)
         text_label = QLabel("T&ext:")
@@ -305,7 +316,9 @@ class DisplayWidget(QWidget):
         model = self.model()
         row = self.mapper.currentIndex()
         model.insertRow(row)
-        self.mapper.setCurrentIndex(row)
+        index = model.inserted_index()
+        self.entry_display.selectRow(index.row())
+        self.mapper.setCurrentModelIndex(index)
 
 
 class DiaryViewer(QMainWindow):
