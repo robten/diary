@@ -252,7 +252,7 @@ class DisplayWidget(QWidget):
         self._last_index = None
         self.entry_display = QTableView()
         self.title_edit = QLineEdit()
-        self.text_edit = QTextEdit()
+        self.text_edit = QPlainTextEdit()
         self.add_button = QPushButton("&Add")
         self.remove_button = QPushButton("&Remove")
         self.submit_button = QPushButton("&Submit")
@@ -260,6 +260,7 @@ class DisplayWidget(QWidget):
         self.submit_button.hide()
         self.cancel_button.hide()
         self.mapper = QDataWidgetMapper()
+        self.mapper.setSubmitPolicy(QDataWidgetMapper.ManualSubmit)
         self.setModel(model)
         self.enable_mapping()
         self.entry_display.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -291,7 +292,11 @@ class DisplayWidget(QWidget):
         # Connections
         self.entry_display.selectionModel().currentRowChanged.connect(
             self.mapper.setCurrentModelIndex)
+        self.title_edit.textEdited.connect(self.show_edit_buttons)
+        self.text_edit.document().undoAvailable.connect(self.show_edit_buttons)
         self.add_button.pressed.connect(self.add_pressed)
+        self.submit_button.pressed.connect(self.submit_pressed)
+        self.cancel_button.pressed.connect(self.cancel_pressed)
 
     def enable_mapping(self):
         self.mapper.addMapping(self.title_edit, 1)
@@ -319,6 +324,20 @@ class DisplayWidget(QWidget):
         index = model.inserted_index()
         self.entry_display.selectRow(index.row())
         self.mapper.setCurrentModelIndex(index)
+
+    def submit_pressed(self):
+        self.mapper.submit()
+        self.submit_button.hide()
+        self.cancel_button.hide()
+
+    def cancel_pressed(self):
+        self.mapper.revert()
+        self.submit_button.hide()
+        self.cancel_button.hide()
+
+    def show_edit_buttons(self):
+        self.submit_button.show()
+        self.cancel_button.show()
 
 
 class DiaryViewer(QMainWindow):
