@@ -308,8 +308,8 @@ class DisplayWidget(QWidget):
         # Connections
         self.entry_display.selectionModel().currentRowChanged.connect(
             self.mapper.setCurrentModelIndex)
-        self.title_edit.textEdited.connect(self.show_edit_buttons)
-        self.text_edit.document().undoAvailable.connect(self.show_edit_buttons)
+        self.title_edit.textEdited.connect(self.start_edit_mode)
+        self.text_edit.document().undoAvailable.connect(self.start_edit_mode)
         self.add_button.pressed.connect(self.add_pressed)
         self.remove_button.pressed.connect(self.remove_pressed)
         self.submit_button.pressed.connect(self.submit_pressed)
@@ -342,6 +342,8 @@ class DisplayWidget(QWidget):
         index = model.inserted_index()
         self.entry_display.selectRow(index.row())
         self.mapper.setCurrentModelIndex(index)
+        self.title_edit.setFocus()
+        self.start_edit_mode()
 
     @pyqtSlot()
     def remove_pressed(self):
@@ -352,19 +354,26 @@ class DisplayWidget(QWidget):
     @pyqtSlot()
     def submit_pressed(self):
         self.mapper.submit()
-        self.submit_button.hide()
-        self.cancel_button.hide()
+        self.end_edit_mode()
 
     @pyqtSlot()
     def cancel_pressed(self):
         self.mapper.revert()
-        self.submit_button.hide()
-        self.cancel_button.hide()
+        self.end_edit_mode()
 
     @pyqtSlot()
-    def show_edit_buttons(self):
+    def start_edit_mode(self):
+        self.add_button.setDisabled(True)
+        self.remove_button.setDisabled(True)
         self.submit_button.show()
         self.cancel_button.show()
+
+    @pyqtSlot()
+    def end_edit_mode(self):
+        self.add_button.setDisabled(False)
+        self.remove_button.setDisabled(False)
+        self.submit_button.hide()
+        self.cancel_button.hide()
 
 
 class DiaryViewer(QMainWindow):
