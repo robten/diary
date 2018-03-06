@@ -3,7 +3,7 @@
 
 
 from PyQt5.QtCore import QAbstractTableModel, QSortFilterProxyModel, QModelIndex, Qt, QDate,\
-    QItemSelectionModel
+    pyqtSlot
 from PyQt5.QtWidgets import *
 from sqlalchemy import inspect
 from datetime import date
@@ -187,7 +187,7 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         else:
             return False
 
-    def insertRows(self, row, count, parent=QModelIndex(), *args, **kwargs):
+    def insertRows(self, row, count, parent=None, *args, **kwargs):
         if count > 1 or row > self.rowCount():
             return False
         column_types = list()
@@ -235,10 +235,10 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         else:
             return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
-    def columnCount(self, parent=QModelIndex(), *args, **kwargs):
+    def columnCount(self, parent=None, *args, **kwargs):
         return len(self.meta_columns)
 
-    def rowCount(self, parent=QModelIndex(), *args, **kwargs):
+    def rowCount(self, parent=None, *args, **kwargs):
         return len(self._data)
 
 
@@ -334,6 +334,7 @@ class DisplayWidget(QWidget):
     def model(self):
         return self.entry_display.model()
 
+    @pyqtSlot()
     def add_pressed(self):
         model = self.model()
         row = self.mapper.currentIndex()
@@ -342,21 +343,25 @@ class DisplayWidget(QWidget):
         self.entry_display.selectRow(index.row())
         self.mapper.setCurrentModelIndex(index)
 
+    @pyqtSlot()
     def remove_pressed(self):
         selected_row = self.entry_display.selectionModel().selectedRows()
         model = self.model()
         model.removeRow(selected_row[0].row())
 
+    @pyqtSlot()
     def submit_pressed(self):
         self.mapper.submit()
         self.submit_button.hide()
         self.cancel_button.hide()
 
+    @pyqtSlot()
     def cancel_pressed(self):
         self.mapper.revert()
         self.submit_button.hide()
         self.cancel_button.hide()
 
+    @pyqtSlot()
     def show_edit_buttons(self):
         self.submit_button.show()
         self.cancel_button.show()
