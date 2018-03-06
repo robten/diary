@@ -213,6 +213,21 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         self.endInsertRows()
         return True
 
+    def removeRows(self, row, count, parent=None, *args, **kwargs):
+        if row < 0 or row > self.rowCount():
+            return False
+        item = self._data[row]  # Only implemented for single row removal, yet
+        self.beginRemoveRows(parent, row, row + count - 1)
+        if type(item).__name__ == "result" or isinstance(item, tuple):
+            for content in item:
+                self._query.session.delete(content)
+        else:
+            self._query.session.delete(item)
+        self.save()
+        self.load()
+        self.endRemoveRows()
+        return True
+
     def flags(self, index):
         column = index.column()
         if self.meta_columns[column]["type"] == "class_attr":
@@ -296,6 +311,7 @@ class DisplayWidget(QWidget):
         self.title_edit.textEdited.connect(self.show_edit_buttons)
         self.text_edit.document().undoAvailable.connect(self.show_edit_buttons)
         self.add_button.pressed.connect(self.add_pressed)
+        self.remove_button.pressed.connect(self.remove_pressed)
         self.submit_button.pressed.connect(self.submit_pressed)
         self.cancel_button.pressed.connect(self.cancel_pressed)
 
@@ -325,6 +341,11 @@ class DisplayWidget(QWidget):
         index = model.inserted_index()
         self.entry_display.selectRow(index.row())
         self.mapper.setCurrentModelIndex(index)
+
+    def remove_pressed(self):
+        selected_row = self.entry_display.selectionModel().selectedRows()
+        model = self.model()
+        model.removeRow(selected_row[0].row())
 
     def submit_pressed(self):
         self.mapper.submit()
