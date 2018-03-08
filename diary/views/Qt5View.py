@@ -367,6 +367,7 @@ class DisplayWidget(QWidget):
         self.remove_button.setDisabled(True)
         self.submit_button.show()
         self.cancel_button.show()
+        self.entry_display.setDisabled(True)
 
     @pyqtSlot()
     def end_edit_mode(self):
@@ -374,6 +375,7 @@ class DisplayWidget(QWidget):
         self.remove_button.setDisabled(False)
         self.submit_button.hide()
         self.cancel_button.hide()
+        self.entry_display.setDisabled(False)
 
 
 class DiaryViewer(QMainWindow):
