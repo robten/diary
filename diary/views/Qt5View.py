@@ -220,9 +220,15 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         self.beginRemoveRows(parent, row, row + count - 1)
         if type(item).__name__ == "result" or isinstance(item, tuple):
             for content in item:
-                self._query.session.delete(content)
+                if content in self._query.session.new:
+                    self._query.session.expunge(content)
+                else:
+                    self._query.session.delete(content)
         else:
-            self._query.session.delete(item)
+            if item in self._query.session.new:
+                self._query.session.expunge(item)
+            else:
+                self._query.session.delete(item)
         self.save()
         self.load()
         self.endRemoveRows()
@@ -265,6 +271,7 @@ class DisplayWidget(QWidget):
     def __init__(self, model, parent=None):
         super(DisplayWidget, self).__init__(parent)
         self._last_index = None
+        self._edit_new = False
         self.entry_display = QTableView()
         self.title_edit = QLineEdit()
         self.text_edit = QPlainTextEdit()
@@ -343,6 +350,7 @@ class DisplayWidget(QWidget):
         self.entry_display.selectRow(index.row())
         self.mapper.setCurrentModelIndex(index)
         self.title_edit.setFocus()
+        self._edit_new = True
         self.start_edit_mode()
 
     @pyqtSlot()
@@ -359,6 +367,9 @@ class DisplayWidget(QWidget):
     @pyqtSlot()
     def cancel_pressed(self):
         self.mapper.revert()
+        if self._edit_new:
+            self.remove_pressed()
+            self._edit_new = False
         self.end_edit_mode()
 
     @pyqtSlot()
