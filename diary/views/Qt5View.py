@@ -275,6 +275,8 @@ class DisplayWidget(QWidget):
         self.entry_display = QTableView()
         self.title_edit = QLineEdit()
         self.text_edit = QPlainTextEdit()
+        self.date_edit = QDateEdit()
+        self.date_edit.setCalendarPopup(True)
         self.add_button = QPushButton("&Add")
         self.remove_button = QPushButton("&Remove")
         self.submit_button = QPushButton("&Submit")
@@ -291,6 +293,8 @@ class DisplayWidget(QWidget):
         title_label.setBuddy(self.title_edit)
         text_label = QLabel("T&ext:")
         text_label.setBuddy(self.text_edit)
+        date_label = QLabel("&Date:")
+        date_label.setBuddy(self.date_edit)
 
         # Layout
         main_layout = QVBoxLayout(self)
@@ -299,8 +303,10 @@ class DisplayWidget(QWidget):
         button_layout = QVBoxLayout(self)
         edit_layout.addWidget(title_label, 0, 0)
         edit_layout.addWidget(self.title_edit, 0, 1)
+        edit_layout.addWidget(date_label, 0, 2)
+        edit_layout.addWidget(self.date_edit, 0, 3)
         edit_layout.addWidget(text_label, 1, 0, Qt.AlignTop)
-        edit_layout.addWidget(self.text_edit, 1, 1)
+        edit_layout.addWidget(self.text_edit, 1, 1, 1, 3)
         button_layout.addWidget(self.add_button)
         button_layout.addWidget(self.remove_button)
         button_layout.addStretch()
@@ -317,6 +323,7 @@ class DisplayWidget(QWidget):
             self.mapper.setCurrentModelIndex)
         self.title_edit.textEdited.connect(self.start_edit_mode)
         self.text_edit.document().undoAvailable.connect(self.start_edit_mode)
+        self.date_edit.editingFinished.connect(self.start_edit_mode)
         self.add_button.pressed.connect(self.add_pressed)
         self.remove_button.pressed.connect(self.remove_pressed)
         self.submit_button.pressed.connect(self.submit_pressed)
@@ -325,6 +332,7 @@ class DisplayWidget(QWidget):
     def enable_mapping(self):
         self.mapper.addMapping(self.title_edit, 1)
         self.mapper.addMapping(self.text_edit, 2)
+        self.mapper.addMapping(self.date_edit, 3)
         if self._last_index:
             self.mapper.setCurrentIndex(self._last_index)
 
