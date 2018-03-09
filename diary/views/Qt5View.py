@@ -296,6 +296,14 @@ class DisplayWidget(QWidget):
         date_label = QLabel("&Date:")
         date_label.setBuddy(self.date_edit)
 
+        # Tab Order
+        self.setTabOrder(self.add_button, self.remove_button)
+        self.setTabOrder(self.remove_button, self.title_edit)
+        self.setTabOrder(self.title_edit, self.date_edit)
+        self.setTabOrder(self.date_edit, self.text_edit)
+        self.setTabOrder(self.text_edit, self.submit_button)
+        self.setTabOrder(self.submit_button, self.cancel_button)
+
         # Layout
         main_layout = QVBoxLayout(self)
         sub_layout = QHBoxLayout(self)
