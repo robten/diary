@@ -140,18 +140,20 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         value = None
         if role in (Qt.DisplayRole, Qt.EditRole):
             if self._result_is_collection:
+                model_obj = data[self.meta_columns[column]["result_position"]]
                 # handle collections returned by query
                 if self.meta_columns[column]["type"] == "class_attr":
-                    model_obj = data[self.meta_columns[column]["result_position"]]
                     value = getattr(model_obj, self.meta_columns[column]["name"])
                 if self.meta_columns[column]["type"] == "attr":
-                    value = data[self.meta_columns[column]["result_position"]]
+                    value = model_obj
                 if self.meta_columns[column]["type"] == "class_relation":
-                    value = self._list_relations(index)
+                    value = self._list_relations(index) if role == Qt.DisplayRole \
+                        else getattr(model_obj, self.meta_columns[column]["name"])
             else:
                 # handle single result (only possible, when a single model class was queried for
                 if self.meta_columns[column]["type"] == "class_relation":
-                    value = self._list_relations(index)
+                    value = self._list_relations(index) if role == Qt.DisplayRole \
+                        else getattr(data, self.meta_columns[column]["name"])
                 else:
                     value = getattr(data, self.meta_columns[column]["name"])
             # Checking value or meta_columns type for individual type representation:
@@ -169,15 +171,15 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
             if isinstance(value, QDate):
                 value = value.toPyDate()
             if self._result_is_collection:
+                model_obj = data[self.meta_columns[column]["result_position"]]
                 # handle collections returned by query
                 if self.meta_columns[column]["type"] == "class_attr":
-                    model_obj = data[self.meta_columns[column]["result_position"]]
                     setattr(model_obj, self.meta_columns[column]["name"], value)
                 if self.meta_columns[column]["type"] == "attr":
                     # data[self.meta_columns[column]["result_position"]] = element
                     pass  # TODO: Handle editing for single columns (not easy in SqlAlchemy)
                 if self.meta_columns[column]["type"] == "class_relation":
-                    pass  # TODO: Handle editing of relationships
+                    setattr(model_obj, self.meta_columns[column]["name"], value)
             else:
                 # handle single result (only possible, when a single model class was queried for
                 setattr(data, self.meta_columns[column]["name"], value)
