@@ -279,6 +279,7 @@ class DisplayWidget(QWidget):
         self.text_edit = QPlainTextEdit()
         self.date_edit = QDateEdit()
         self.date_edit.setCalendarPopup(True)
+        self.file_edit = QLineEdit()
         self.add_button = QPushButton("&Add")
         self.remove_button = QPushButton("&Remove")
         self.submit_button = QPushButton("&Submit")
@@ -297,13 +298,16 @@ class DisplayWidget(QWidget):
         text_label.setBuddy(self.text_edit)
         date_label = QLabel("&Date:")
         date_label.setBuddy(self.date_edit)
+        file_label = QLabel("&Files")
+        file_label.setBuddy(self.file_edit)
 
         # Tab Order
         self.setTabOrder(self.add_button, self.remove_button)
         self.setTabOrder(self.remove_button, self.title_edit)
         self.setTabOrder(self.title_edit, self.date_edit)
         self.setTabOrder(self.date_edit, self.text_edit)
-        self.setTabOrder(self.text_edit, self.submit_button)
+        self.setTabOrder(self.text_edit, self.file_edit)
+        self.setTabOrder(self.file_edit, self.submit_button)
         self.setTabOrder(self.submit_button, self.cancel_button)
 
         # Layout
@@ -317,6 +321,8 @@ class DisplayWidget(QWidget):
         edit_layout.addWidget(self.date_edit, 0, 3)
         edit_layout.addWidget(text_label, 1, 0, Qt.AlignTop)
         edit_layout.addWidget(self.text_edit, 1, 1, 1, 3)
+        edit_layout.addWidget(file_label, 2, 0)
+        edit_layout.addWidget(self.file_edit, 2, 1)
         button_layout.addWidget(self.add_button)
         button_layout.addWidget(self.remove_button)
         button_layout.addStretch()
@@ -343,6 +349,7 @@ class DisplayWidget(QWidget):
         self.mapper.addMapping(self.title_edit, 1)
         self.mapper.addMapping(self.text_edit, 2)
         self.mapper.addMapping(self.date_edit, 3)
+        self.mapper.addMapping(self.file_edit, 4)
         if self._last_index:
             self.mapper.setCurrentIndex(self._last_index)
 
