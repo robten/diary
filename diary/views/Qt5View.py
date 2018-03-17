@@ -4,6 +4,7 @@
 
 from PyQt5.QtCore import QAbstractTableModel, QSortFilterProxyModel, QModelIndex, Qt, QDate,\
     pyqtSlot
+from PyQt5.QtGui import QTextDocument
 from PyQt5.QtWidgets import *
 from sqlalchemy import inspect
 from datetime import date
@@ -238,7 +239,7 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
 
     def flags(self, index):
         column = index.column()
-        if self.meta_columns[column]["type"] == "class_attr":
+        if self.meta_columns[column]["type"] in ("class_attr", "class_relation"):
             return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
         else:
             return Qt.ItemIsEnabled | Qt.ItemIsSelectable
@@ -269,6 +270,39 @@ class SortFilterModel(QSortFilterProxyModel):
         return super(SortFilterModel, self).headerData(section, orientation, role)
 
 
+class FilesMapperDelegate(QStyledItemDelegate):
+    def __init__(self, parent=None):
+        super(FilesMapperDelegate, self).__init__(parent)
+
+    def setEditorData(self, editor, index):
+        if index.column() == 4:  # Hardcoded for files column in Entry table class
+            files = index.model().data(index, Qt.EditRole)
+            editor.setColumnCount(3)
+            editor.setRowCount(len(files))
+            editor.setHorizontalHeaderLabels(("Filename", "Filepath", "Timestamp"))
+            row = 0
+            for file in files:
+                name = QTableWidgetItem()
+                name.setData(Qt.DisplayRole, file.name)
+                path = QTableWidgetItem()
+                path.setData(Qt.DisplayRole, file.subpath)
+                timestamp = QTableWidgetItem()
+                timestamp.setData(Qt.DisplayRole, QDate(file.timestamp))
+                timestamp.setData(Qt.EditRole, QDate(file.timestamp))
+                editor.setItem(row, 0, name)
+                editor.setItem(row, 1, path)
+                editor.setItem(row, 2, timestamp)
+                row += 1
+        else:
+            super(FilesMapperDelegate, self).setEditorData(editor, index)
+
+    def setModelData(self, editor, model, index):
+        if index.column() == 4:  # Hardcoded for files column in Entry table class
+            print(editor.text())  # TODO: Implement writing changed data back to model
+        else:
+            super(FilesMapperDelegate, self).setModelData(editor, model, index)
+
+
 class DisplayWidget(QWidget):
     def __init__(self, model, parent=None):
         super(DisplayWidget, self).__init__(parent)
@@ -279,7 +313,7 @@ class DisplayWidget(QWidget):
         self.text_edit = QPlainTextEdit()
         self.date_edit = QDateEdit()
         self.date_edit.setCalendarPopup(True)
-        self.file_edit = QLineEdit()
+        self.file_edit = QTableWidget()
         self.add_button = QPushButton("&Add")
         self.remove_button = QPushButton("&Remove")
         self.submit_button = QPushButton("&Submit")
@@ -287,6 +321,7 @@ class DisplayWidget(QWidget):
         self.submit_button.hide()
         self.cancel_button.hide()
         self.mapper = QDataWidgetMapper()
+        self.mapper.setItemDelegate(FilesMapperDelegate(self))
         self.mapper.setSubmitPolicy(QDataWidgetMapper.ManualSubmit)
         self.setModel(model)
         self.enable_mapping()
@@ -322,7 +357,7 @@ class DisplayWidget(QWidget):
         edit_layout.addWidget(text_label, 1, 0, Qt.AlignTop)
         edit_layout.addWidget(self.text_edit, 1, 1, 1, 3)
         edit_layout.addWidget(file_label, 2, 0)
-        edit_layout.addWidget(self.file_edit, 2, 1)
+        edit_layout.addWidget(self.file_edit, 2, 1, 1, 2)
         button_layout.addWidget(self.add_button)
         button_layout.addWidget(self.remove_button)
         button_layout.addStretch()
@@ -340,6 +375,7 @@ class DisplayWidget(QWidget):
         self.title_edit.textEdited.connect(self.start_edit_mode)
         self.text_edit.document().undoAvailable.connect(self.start_edit_mode)
         self.date_edit.editingFinished.connect(self.start_edit_mode)
+        self.file_edit.itemDoubleClicked.connect(self.start_edit_mode)
         self.add_button.pressed.connect(self.add_pressed)
         self.remove_button.pressed.connect(self.remove_pressed)
         self.submit_button.pressed.connect(self.submit_pressed)
