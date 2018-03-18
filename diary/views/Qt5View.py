@@ -283,21 +283,25 @@ class FilesMapperDelegate(QStyledItemDelegate):
             for file in files:
                 name = QTableWidgetItem()
                 name.setData(Qt.DisplayRole, file.name)
+                name.setData(Qt.UserRole, file)
                 path = QTableWidgetItem()
                 path.setData(Qt.DisplayRole, file.subpath)
                 timestamp = QTableWidgetItem()
                 timestamp.setData(Qt.DisplayRole, QDate(file.timestamp))
-                timestamp.setData(Qt.EditRole, QDate(file.timestamp))
                 editor.setItem(row, 0, name)
                 editor.setItem(row, 1, path)
                 editor.setItem(row, 2, timestamp)
                 row += 1
+            editor.setCurrentCell(-1, -1)  # cancel any previous selection
         else:
             super(FilesMapperDelegate, self).setEditorData(editor, index)
 
     def setModelData(self, editor, model, index):
         if index.column() == 4:  # Hardcoded for files column in Entry table class
-            print(editor.text())  # TODO: Implement writing changed data back to model
+            edited_files = list()
+            for row in range(editor.rowCount()):
+                edited_files.append(editor.item(row, 0).data(Qt.UserRole))
+            model.setData(index, edited_files)
         else:
             super(FilesMapperDelegate, self).setModelData(editor, model, index)
 
@@ -316,6 +320,8 @@ class DisplayWidget(QWidget):
         self.file_edit.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
         self.file_edit.setMaximumHeight(100)
         self.file_edit.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.file_edit.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.file_edit.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.add_button = QPushButton("&Add")
         self.remove_button = QPushButton("&Remove")
         self.submit_button = QPushButton("&Submit")
