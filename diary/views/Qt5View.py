@@ -4,7 +4,6 @@
 
 from PyQt5.QtCore import QAbstractTableModel, QSortFilterProxyModel, QModelIndex, Qt, QDate,\
     pyqtSlot
-from PyQt5.QtGui import QTextDocument
 from PyQt5.QtWidgets import *
 from sqlalchemy import inspect
 from datetime import date
@@ -314,6 +313,9 @@ class DisplayWidget(QWidget):
         self.date_edit = QDateEdit()
         self.date_edit.setCalendarPopup(True)
         self.file_edit = QTableWidget()
+        self.file_edit.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
+        self.file_edit.setMaximumHeight(100)
+        self.file_edit.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.add_button = QPushButton("&Add")
         self.remove_button = QPushButton("&Remove")
         self.submit_button = QPushButton("&Submit")
@@ -327,6 +329,11 @@ class DisplayWidget(QWidget):
         self.enable_mapping()
         self.entry_display.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.entry_display.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.entry_display.hideColumn(0)
+        self.entry_display.hideColumn(2)
+        self.entry_display.horizontalHeader().setStretchLastSection(True)
+        self.entry_display.setSortingEnabled(True)
+        self.entry_display.resizeColumnsToContents()
         title_label = QLabel("&Title:")
         title_label.setBuddy(self.title_edit)
         text_label = QLabel("T&ext:")
@@ -357,7 +364,7 @@ class DisplayWidget(QWidget):
         edit_layout.addWidget(text_label, 1, 0, Qt.AlignTop)
         edit_layout.addWidget(self.text_edit, 1, 1, 1, 3)
         edit_layout.addWidget(file_label, 2, 0)
-        edit_layout.addWidget(self.file_edit, 2, 1, 1, 2)
+        edit_layout.addWidget(self.file_edit, 2, 1, 1, 3)
         button_layout.addWidget(self.add_button)
         button_layout.addWidget(self.remove_button)
         button_layout.addStretch()
@@ -456,9 +463,6 @@ class DiaryViewer(QMainWindow):
 
         # View
         central_widget = DisplayWidget(self)
-        central_widget.entry_display.hideColumn(0)
-        central_widget.entry_display.horizontalHeader().setStretchLastSection(True)
-        central_widget.entry_display.resizeColumnsToContents()
         self.setCentralWidget(central_widget)
         self.setGeometry(200, 20, 1500, 1000)
         self.setWindowTitle("Diary")
