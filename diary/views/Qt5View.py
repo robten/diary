@@ -274,7 +274,7 @@ class SqlAlchemyCollectionDelegate(QStyledItemDelegate):
     def __init__(self, managed_column, displayed_columns, column_labels=None, parent=None):
         """
         A generic delegate to manage editing collections of SqlAlchemy relations. To be used only
-        on a QTableWidget as editor (i.e. a QDataWidgetMapper).
+        on a QTableWidget as editor (i.e. used by a QDataWidgetMapper).
         :param managed_column: int, The column of the collection inside the model.
         :param displayed_columns: Iterable, Which fields of the related model should be displayed.
         :param column_labels: Iterable, Optional list of label names for column headers.
