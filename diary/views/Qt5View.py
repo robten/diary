@@ -5,6 +5,7 @@
 from PyQt5.QtCore import QAbstractTableModel, QSortFilterProxyModel, QModelIndex, Qt, QDate,\
     pyqtSlot
 from PyQt5.QtWidgets import *
+from collections import Iterable
 from sqlalchemy import inspect
 from datetime import date
 
@@ -269,41 +270,51 @@ class SortFilterModel(QSortFilterProxyModel):
         return super(SortFilterModel, self).headerData(section, orientation, role)
 
 
-class FilesMapperDelegate(QStyledItemDelegate):
-    def __init__(self, parent=None):
-        super(FilesMapperDelegate, self).__init__(parent)
+class SqlAlchemyCollectionDelegate(QStyledItemDelegate):
+    def __init__(self, managed_column, displayed_columns, column_labels=None, parent=None):
+        """
+        A generic delegate to manage editing collections of SqlAlchemy relations. To be used only
+        on a QTableWidget as editor (i.e. a QDataWidgetMapper).
+        :param managed_column: int, The column of the collection inside the model.
+        :param displayed_columns: Iterable, Which fields of the related model should be displayed.
+        :param column_labels: Iterable, Optional list of label names for column headers.
+        :param parent: QObject
+        """
+        super(SqlAlchemyCollectionDelegate, self).__init__(parent)
+        if not isinstance(displayed_columns, Iterable):
+            raise TypeError("parameter displayed_columns should be an iterable.")
+        self._target_colum = managed_column
+        self._source_columns = displayed_columns
+        self._labels = column_labels if column_labels else displayed_columns
 
     def setEditorData(self, editor, index):
-        if index.column() == 4:  # Hardcoded for files column in Entry table class
-            files = index.model().data(index, Qt.EditRole)
-            editor.setColumnCount(3)
-            editor.setRowCount(len(files))
-            editor.setHorizontalHeaderLabels(("Filename", "Filepath", "Timestamp"))
-            row = 0
-            for file in files:
-                name = QTableWidgetItem()
-                name.setData(Qt.DisplayRole, file.name)
-                name.setData(Qt.UserRole, file)
-                path = QTableWidgetItem()
-                path.setData(Qt.DisplayRole, file.subpath)
-                timestamp = QTableWidgetItem()
-                timestamp.setData(Qt.DisplayRole, QDate(file.timestamp))
-                editor.setItem(row, 0, name)
-                editor.setItem(row, 1, path)
-                editor.setItem(row, 2, timestamp)
-                row += 1
+        if index.column() == self._target_colum:
+            collection = index.model().data(index, Qt.EditRole)
+            editor.setColumnCount(len(self._source_columns))
+            editor.setHorizontalHeaderLabels(self._labels)
+            editor.setRowCount(len(collection))
+            for row, element in enumerate(collection):
+                for column, field in enumerate(self._source_columns):
+                    data = getattr(element, field)
+                    if isinstance(data, date):
+                        data = QDate(data)
+                    item = QTableWidgetItem()
+                    item.setData(Qt.DisplayRole, data)
+                    if column == 0:
+                        item.setData(Qt.UserRole, element)
+                    editor.setItem(row, column, item)
             editor.setCurrentCell(-1, -1)  # cancel any previous selection
         else:
-            super(FilesMapperDelegate, self).setEditorData(editor, index)
+            super(SqlAlchemyCollectionDelegate, self).setEditorData(editor, index)
 
     def setModelData(self, editor, model, index):
-        if index.column() == 4:  # Hardcoded for files column in Entry table class
-            edited_files = list()
+        if index.column() == self._target_colum:
+            edited_rows = list()
             for row in range(editor.rowCount()):
-                edited_files.append(editor.item(row, 0).data(Qt.UserRole))
-            model.setData(index, edited_files)
+                edited_rows.append(editor.item(row, 0).data(Qt.UserRole))
+            model.setData(index, edited_rows)
         else:
-            super(FilesMapperDelegate, self).setModelData(editor, model, index)
+            super(SqlAlchemyCollectionDelegate, self).setModelData(editor, model, index)
 
 
 class DisplayWidget(QWidget):
@@ -329,7 +340,12 @@ class DisplayWidget(QWidget):
         self.submit_button.hide()
         self.cancel_button.hide()
         self.mapper = QDataWidgetMapper()
-        self.mapper.setItemDelegate(FilesMapperDelegate(self))
+        self.mapper.setItemDelegate(SqlAlchemyCollectionDelegate(4,
+                                                                 ("name", "subpath", "timestamp"),
+                                                                 column_labels=("Filename",
+                                                                                "Filepath",
+                                                                                "Timestamp"),
+                                                                 parent=self))
         self.mapper.setSubmitPolicy(QDataWidgetMapper.ManualSubmit)
         self.setModel(model)
         self.enable_mapping()
