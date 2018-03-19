@@ -283,12 +283,12 @@ class SqlAlchemyCollectionDelegate(QStyledItemDelegate):
         super(SqlAlchemyCollectionDelegate, self).__init__(parent)
         if not isinstance(displayed_columns, Iterable):
             raise TypeError("parameter displayed_columns should be an iterable.")
-        self._target_colum = managed_column
+        self._target_column = managed_column
         self._source_columns = displayed_columns
         self._labels = column_labels if column_labels else displayed_columns
 
     def setEditorData(self, editor, index):
-        if index.column() == self._target_colum:
+        if index.column() == self._target_column:
             collection = index.model().data(index, Qt.EditRole)
             editor.setColumnCount(len(self._source_columns))
             editor.setHorizontalHeaderLabels(self._labels)
@@ -308,7 +308,7 @@ class SqlAlchemyCollectionDelegate(QStyledItemDelegate):
             super(SqlAlchemyCollectionDelegate, self).setEditorData(editor, index)
 
     def setModelData(self, editor, model, index):
-        if index.column() == self._target_colum:
+        if index.column() == self._target_column:
             edited_rows = list()
             for row in range(editor.rowCount()):
                 edited_rows.append(editor.item(row, 0).data(Qt.UserRole))
