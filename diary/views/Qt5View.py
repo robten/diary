@@ -322,7 +322,11 @@ class DisplayWidget(QWidget):
         super(DisplayWidget, self).__init__(parent)
         self._last_index = None
         self._edit_new = False
+
+        # Widgets
         self.entry_display = QTableView()
+        self.entry_display.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.entry_display.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.title_edit = QLineEdit()
         self.text_edit = QPlainTextEdit()
         self.date_edit = QDateEdit()
@@ -333,12 +337,24 @@ class DisplayWidget(QWidget):
         self.file_edit.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.file_edit.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.file_edit.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        title_label = QLabel("&Title:")
+        title_label.setBuddy(self.title_edit)
+        text_label = QLabel("T&ext:")
+        text_label.setBuddy(self.text_edit)
+        date_label = QLabel("&Date:")
+        date_label.setBuddy(self.date_edit)
+        file_label = QLabel("&Files")
+        file_label.setBuddy(self.file_edit)
+
+        # Buttons
         self.add_button = QPushButton("&Add")
         self.remove_button = QPushButton("&Remove")
         self.submit_button = QPushButton("&Submit")
         self.cancel_button = QPushButton("&Cancel")
         self.submit_button.hide()
         self.cancel_button.hide()
+
+        # Mapper &  UI setup
         self.mapper = QDataWidgetMapper()
         self.mapper.setItemDelegate(SqlAlchemyCollectionDelegate(4,
                                                                  ("name", "subpath", "timestamp"),
@@ -349,21 +365,11 @@ class DisplayWidget(QWidget):
         self.mapper.setSubmitPolicy(QDataWidgetMapper.ManualSubmit)
         self.setModel(model)
         self.enable_mapping()
-        self.entry_display.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.entry_display.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.entry_display.hideColumn(0)
         self.entry_display.hideColumn(2)
         self.entry_display.horizontalHeader().setStretchLastSection(True)
         self.entry_display.setSortingEnabled(True)
         self.entry_display.resizeColumnsToContents()
-        title_label = QLabel("&Title:")
-        title_label.setBuddy(self.title_edit)
-        text_label = QLabel("T&ext:")
-        text_label.setBuddy(self.text_edit)
-        date_label = QLabel("&Date:")
-        date_label.setBuddy(self.date_edit)
-        file_label = QLabel("&Files")
-        file_label.setBuddy(self.file_edit)
 
         # Tab Order
         self.setTabOrder(self.add_button, self.remove_button)
