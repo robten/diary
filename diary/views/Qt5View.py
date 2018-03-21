@@ -317,6 +317,39 @@ class SqlAlchemyCollectionDelegate(QStyledItemDelegate):
             super(SqlAlchemyCollectionDelegate, self).setModelData(editor, model, index)
 
 
+class SqlAlchemySelectDialog(QDialog):
+    def __init__(self, sqlalchemy_obj, parent=None):
+        super(SqlAlchemySelectDialog, self).__init__(parent)
+        meta_obj = inspect(sqlalchemy_obj)
+        subquery = meta_obj.session.query(meta_obj.class_)  # TODO: filter out connected items
+        self.model = SqlAlchemyQueryModel(subquery)
+        self.obj_table = QTableView()
+        self.obj_table.setModel(self.model)
+        self.obj_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.obj_table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.obj_table.setSelectionMode(QAbstractItemView.MultiSelection)
+        self.obj_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.obj_table.setCurrentIndex(QModelIndex())
+
+        # Buttons
+        self.connect_button = QPushButton("C&onnect")
+        self.cancel_button = QPushButton("&Cancel")
+
+        # Layout
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.connect_button)
+        button_layout.addWidget(self.cancel_button)
+        dialog_layout = QGridLayout()
+        dialog_layout.addWidget(self.obj_table, 0, 0)
+        dialog_layout.addLayout(button_layout, 1, 0, Qt.AlignRight)
+        self.setLayout(dialog_layout)
+        self.setMinimumWidth(self.obj_table.size().width())
+
+        # Connection
+        self.connect_button.pressed.connect(self.accept)
+        self.cancel_button.pressed.connect(self.reject)
+
+
 class DisplayWidget(QWidget):
     def __init__(self, model, parent=None):
         super(DisplayWidget, self).__init__(parent)
@@ -423,6 +456,7 @@ class DisplayWidget(QWidget):
         self.remove_button.pressed.connect(self.remove_pressed)
         self.submit_button.pressed.connect(self.submit_pressed)
         self.cancel_button.pressed.connect(self.cancel_pressed)
+        self.fconnect_button.pressed.connect(self.fconnect_pressed)
 
     def enable_mapping(self):
         self.mapper.addMapping(self.title_edit, 1)
@@ -491,6 +525,13 @@ class DisplayWidget(QWidget):
         self.submit_button.hide()
         self.cancel_button.hide()
         self.entry_display.setDisabled(False)
+
+    @pyqtSlot()
+    def fconnect_pressed(self):
+        current_row = self.file_edit.currentIndex().row()
+        current_data_obj = self.file_edit.item(current_row, 0).data(Qt.UserRole)
+        dialog = SqlAlchemySelectDialog(current_data_obj)
+        dialog.exec_()
 
 
 class DiaryViewer(QMainWindow):
