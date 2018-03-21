@@ -29,8 +29,7 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
             self._result_is_collection = True
         else:
             self._result_is_collection = False
-        column_count = 0
-        for column in self._query.column_descriptions:
+        for column_count, column in enumerate(self._query.column_descriptions):
             if column["expr"] is column["type"]:
                 # column is a model class
                 inspector = inspect(column["type"])
@@ -66,7 +65,6 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
                 self.meta_columns.append(definition)
             else:
                 raise ValueError("parameter query only excepts tables or individual columns")
-            column_count += 1
 
     def _list_relations(self, index):
         column = index.column()
