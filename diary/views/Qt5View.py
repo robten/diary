@@ -316,36 +316,40 @@ class SqlAlchemyCollectionDelegate(QStyledItemDelegate):
 
 
 class SqlAlchemySelectDialog(QDialog):
-    def __init__(self, sqlalchemy_obj, parent=None):
+    def __init__(self, model, caption, parent=None):
         super(SqlAlchemySelectDialog, self).__init__(parent)
-        meta_obj = inspect(sqlalchemy_obj)
-        subquery = meta_obj.session.query(meta_obj.class_)  # TODO: filter out connected items
-        self.model = SqlAlchemyQueryModel(subquery)
-        self.obj_table = QTableView()
-        self.obj_table.setModel(self.model)
-        self.obj_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.obj_table.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.obj_table.setSelectionMode(QAbstractItemView.MultiSelection)
-        self.obj_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.obj_table.setCurrentIndex(QModelIndex())
+        self.setWindowTitle(caption)
+        self.table = QTableView()
+        self.table.setModel(model)
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.table.setSelectionMode(QAbstractItemView.MultiSelection)
+        self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.table.setCurrentIndex(QModelIndex())
+        self.selection = list()  # List of selected items from table
 
         # Buttons
-        self.connect_button = QPushButton("C&onnect")
+        self.select_button = QPushButton("&Select")
         self.cancel_button = QPushButton("&Cancel")
 
         # Layout
         button_layout = QHBoxLayout()
-        button_layout.addWidget(self.connect_button)
+        button_layout.addWidget(self.select_button)
         button_layout.addWidget(self.cancel_button)
         dialog_layout = QGridLayout()
-        dialog_layout.addWidget(self.obj_table, 0, 0)
+        dialog_layout.addWidget(self.table, 0, 0)
         dialog_layout.addLayout(button_layout, 1, 0, Qt.AlignRight)
         self.setLayout(dialog_layout)
-        self.setMinimumWidth(self.obj_table.size().width())
+        self.setMinimumWidth(self.table.size().width())
 
         # Connection
-        self.connect_button.pressed.connect(self.accept)
+        self.select_button.pressed.connect(self.select_items)
         self.cancel_button.pressed.connect(self.reject)
+
+    @pyqtSlot()
+    def select_items(self):
+        # TODO: Get selected items as model instances into self.selection
+        self.accept()
 
 
 class DisplayWidget(QWidget):
@@ -526,9 +530,23 @@ class DisplayWidget(QWidget):
 
     @pyqtSlot()
     def fconnect_pressed(self):
+        # Model
         current_row = self.file_edit.currentIndex().row()
-        current_data_obj = self.file_edit.item(current_row, 0).data(Qt.UserRole)
-        dialog = SqlAlchemySelectDialog(current_data_obj)
+        meta_obj = inspect(self.file_edit.item(current_row, 0).data(Qt.UserRole))
+        subquery = meta_obj.session.query(meta_obj.class_)
+        sql_model = SqlAlchemyQueryModel(subquery)
+        sql_model.setHeaderData(1, Qt.Horizontal, "Filename")
+        sql_model.setHeaderData(2, Qt.Horizontal, "Path")
+        sql_model.setHeaderData(4, Qt.Horizontal, "Date")
+        model = SortFilterModel(self)
+        model.setSourceModel(sql_model)
+
+        # Dialog setup
+        dialog = SqlAlchemySelectDialog(model, "Files to associate this Entry with:")
+        dialog.table.hideColumn(0)
+        dialog.table.hideColumn(3)
+        dialog.table.hideColumn(5)
+        dialog.table.setSortingEnabled(True)
         dialog.exec_()
 
 
