@@ -49,7 +49,8 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
                         "name": relation,
                         "class": inspector.class_,
                         "class_name": inspector.class_.__name__,
-                        "result_position": column_count
+                        "result_position": column_count,
+                        "related_class": getattr(inspector.class_, relation).mapper.class_
                     }
                     self.meta_columns.append(definition)
             elif type(column["expr"]).__name__ == "InstrumentedAttribute":
@@ -100,6 +101,20 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
             if field["name"] == collection and field["type"] == "class_relation":
                 field["relation_key"] = key
                 return
+        raise ValueError("Collection '{}' was not found in query or is no 'class_relation'."
+                         .format(collection))
+
+    def related_table_model(self, collection):
+        """
+        Method creates a sub-query for the related table of the collection column-name and
+        returns it encapsulated inside a seperate SqlAlchemyQueryModel.
+        :param str collection: Name of the relation collection in the refering model class
+        :return: SqlAlchemyQueryModel
+        """
+        for field in self.meta_columns:
+            if field["name"] == collection and field["type"] == "class_relation":
+                related_query = self._query.session.query(field["related_class"])
+                return SqlAlchemyQueryModel(related_query)
         raise ValueError("Collection '{}' was not found in query or is no 'class_relation'."
                          .format(collection))
 
@@ -266,6 +281,12 @@ class SortFilterModel(QSortFilterProxyModel):
             if orientation == Qt.Vertical and role == Qt.DisplayRole:
                 return self.sourceModel().headerData(section, orientation, role)
         return super(SortFilterModel, self).headerData(section, orientation, role)
+
+    def set_relation_display(self, collection, key):
+        self.sourceModel().set_relation_display(collection, key)
+
+    def related_table_model(self, collection):
+        return self.sourceModel().related_table_model(collection)
 
 
 class SqlAlchemyCollectionDelegate(QStyledItemDelegate):
@@ -531,10 +552,7 @@ class DisplayWidget(QWidget):
     @pyqtSlot()
     def fconnect_pressed(self):
         # Model
-        current_row = self.file_edit.currentIndex().row()
-        meta_obj = inspect(self.file_edit.item(current_row, 0).data(Qt.UserRole))
-        subquery = meta_obj.session.query(meta_obj.class_)
-        sql_model = SqlAlchemyQueryModel(subquery)
+        sql_model = self.model().related_table_model("files")
         sql_model.setHeaderData(1, Qt.Horizontal, "Filename")
         sql_model.setHeaderData(2, Qt.Horizontal, "Path")
         sql_model.setHeaderData(4, Qt.Horizontal, "Date")
