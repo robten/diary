@@ -152,7 +152,7 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         data = self._data[index.row()]
         column = index.column()
         value = None
-        if role in (Qt.DisplayRole, Qt.EditRole):
+        if role in (Qt.DisplayRole, Qt.EditRole, Qt.UserRole):
             if self._result_is_collection:
                 model_obj = data[self.meta_columns[column]["result_position"]]
                 # handle collections returned by query
@@ -163,6 +163,8 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
                 if self.meta_columns[column]["type"] == "class_relation":
                     value = self._list_relations(index) if role == Qt.DisplayRole \
                         else getattr(model_obj, self.meta_columns[column]["name"])
+                if role == Qt.UserRole:
+                    value = model_obj
             else:
                 # handle single result (only possible, when a single model class was queried for
                 if self.meta_columns[column]["type"] == "class_relation":
@@ -170,6 +172,8 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
                         else getattr(data, self.meta_columns[column]["name"])
                 else:
                     value = getattr(data, self.meta_columns[column]["name"])
+                if role == Qt.UserRole:
+                    value = data
             # Checking value or meta_columns type for individual type representation:
             if isinstance(value, date):
                 value = QDate(value)
