@@ -383,6 +383,7 @@ class DisplayWidget(QWidget):
         super(DisplayWidget, self).__init__(parent)
         self._last_index = None
         self._edit_new = False
+        self._file_fields = ("name", "subpath", "timestamp")
 
         # Widgets
         self.entry_display = QTableView()
@@ -421,7 +422,7 @@ class DisplayWidget(QWidget):
         # Mapper &  UI setup
         self.mapper = QDataWidgetMapper()
         self.mapper.setItemDelegate(SqlAlchemyCollectionDelegate(4,
-                                                                 ("name", "subpath", "timestamp"),
+                                                                 self._file_fields,
                                                                  column_labels=("Filename",
                                                                                 "Filepath",
                                                                                 "Timestamp"),
@@ -570,7 +571,19 @@ class DisplayWidget(QWidget):
         dialog.table.hideColumn(3)
         dialog.table.hideColumn(5)
         dialog.table.setSortingEnabled(True)
-        dialog.exec_()
+        if dialog.exec_():
+            existing_rows = self.file_edit.rowCount()
+            self.file_edit.setRowCount(existing_rows + len(dialog.selection))
+            for row, file in enumerate(dialog.selection, start=existing_rows):
+                for column, field in enumerate(self._file_fields):
+                    data = getattr(file, field)
+                    if isinstance(data, date):
+                        data = QDate(data)
+                    item = QTableWidgetItem()
+                    item.setData(Qt.DisplayRole, data)
+                    if column == 0:
+                        item.setData(Qt.UserRole, file)
+                    self.file_edit.setItem(row, column, item)
 
 
 class DiaryViewer(QMainWindow):
