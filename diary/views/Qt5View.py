@@ -104,16 +104,33 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         raise ValueError("Collection '{}' was not found in query or is no 'class_relation'."
                          .format(collection))
 
-    def related_table_model(self, collection):
+    def related_table_model(self, collection, key=None, exclude=None):
         """
         Method creates a sub-query for the related table of the collection column-name and
         returns it encapsulated inside a seperate SqlAlchemyQueryModel.
+        :param any or Iterable exclude: optional - A single value or a list/tuple of values to be
+        excluded.
+        :param str key: optional - The key to be used for the value comparison, defaults to primay
+        key if not supplied.
         :param str collection: Name of the relation collection in the refering model class
         :return: SqlAlchemyQueryModel
         """
         for field in self.meta_columns:
             if field["name"] == collection and field["type"] == "class_relation":
+                primary_key = key if key else inspect(field["class"]).primary_key[0].name
                 related_query = self._query.session.query(field["related_class"])
+                if exclude:
+                    print(primary_key)
+                    print(getattr(field["related_class"], primary_key))
+                    print(exclude)
+                    if isinstance(exclude, Iterable):
+                        return SqlAlchemyQueryModel(related_query
+                                                    .filter(getattr(field["related_class"],
+                                                                    primary_key).notin_(exclude)))
+                    else:
+                        return SqlAlchemyQueryModel(related_query
+                                                    .filter(getattr(field["related_class"],
+                                                                    primary_key) != exclude))
                 return SqlAlchemyQueryModel(related_query)
         raise ValueError("Collection '{}' was not found in query or is no 'class_relation'."
                          .format(collection))
@@ -289,8 +306,8 @@ class SortFilterModel(QSortFilterProxyModel):
     def set_relation_display(self, collection, key):
         self.sourceModel().set_relation_display(collection, key)
 
-    def related_table_model(self, collection):
-        return self.sourceModel().related_table_model(collection)
+    def related_table_model(self, *args, **kwargs):
+        return self.sourceModel().related_table_model(*args, **kwargs)
 
 
 class SqlAlchemyCollectionDelegate(QStyledItemDelegate):
