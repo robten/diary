@@ -373,7 +373,8 @@ class SqlAlchemySelectDialog(QDialog):
 
     @pyqtSlot()
     def select_items(self):
-        # TODO: Get selected items as model instances into self.selection
+        for index in self.table.selectionModel().selectedRows():
+            self.selection.append(self.table.model().data(index, Qt.UserRole))
         self.accept()
 
 
