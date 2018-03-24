@@ -575,7 +575,10 @@ class DisplayWidget(QWidget):
     @pyqtSlot()
     def fconnect_pressed(self):
         # Model
-        sql_model = self.model().related_table_model("files")
+        sql_model = self.model().related_table_model("files",
+                                                     exclude=extract_from_table(self.file_edit,
+                                                                                0,
+                                                                                "id"))
         sql_model.setHeaderData(1, Qt.Horizontal, "Filename")
         sql_model.setHeaderData(2, Qt.Horizontal, "Path")
         sql_model.setHeaderData(4, Qt.Horizontal, "Date")
@@ -612,3 +615,22 @@ class DiaryViewer(QMainWindow):
         self.setCentralWidget(central_widget)
         self.setGeometry(200, 20, 1500, 1000)
         self.setWindowTitle("Diary")
+
+
+def extract_from_table(table_widget, column, key=None):
+    """
+    A generator for contents of a column and key (optional) for each row in a QTableWidget.
+    :param QTableWidget table_widget: The source table to extract from
+    :param int column: The column to extract from
+    :param str key: Optional - The key of a SqlAlchemy table stored under Qt.UserRole
+    """
+    if not isinstance(table_widget, QTableWidget):
+        raise TypeError("'table_widget' must be of Type QTableWidget but instead was of type {}"
+                        .format(type(table_widget)))
+    if key:
+        for row in range(table_widget.rowCount()):
+            data = table_widget.item(row, column).data(Qt.UserRole)
+            yield getattr(data, key)
+    else:
+        for row in range(table_widget.rowCount()):
+            yield table_widget.item(row, column).data(Qt.DisplayRole)
