@@ -369,6 +369,7 @@ class SqlAlchemySelectDialog(QDialog):
 
         # Buttons
         self.select_button = QPushButton("&Select")
+        self.select_button.setEnabled(False)
         self.cancel_button = QPushButton("&Cancel")
 
         # Layout
@@ -382,8 +383,15 @@ class SqlAlchemySelectDialog(QDialog):
         self.setMinimumWidth(self.table.size().width())
 
         # Connection
+        self.table.selectionModel().selectionChanged.connect(self.update_status)
         self.select_button.pressed.connect(self.select_items)
         self.cancel_button.pressed.connect(self.reject)
+
+    @pyqtSlot()
+    def update_status(self):
+        status = True if self.table.selectionModel().hasSelection() else False
+        self.select_button.setEnabled(status)
+        self.table.setCurrentIndex(QModelIndex())
 
     @pyqtSlot()
     def select_items(self):
@@ -601,6 +609,7 @@ class DisplayWidget(QWidget):
                     if column == 0:
                         item.setData(Qt.UserRole, file)
                     self.file_edit.setItem(row, column, item)
+            self.date_edit.editingFinished.emit()  # To trigger start_edit_mode()
 
     @pyqtSlot()
     def fdisconnect_pressed(self):
@@ -608,7 +617,7 @@ class DisplayWidget(QWidget):
             row = self.file_edit.currentRow()
             self.file_edit.removeRow(row)
             self.file_edit.setCurrentCell(-1, -1)
-            self.date_edit.editingFinished.emit()
+            self.date_edit.editingFinished.emit()  # To trigger start_edit_mode()
 
 
 
