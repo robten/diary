@@ -120,9 +120,6 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
                 primary_key = key if key else inspect(field["class"]).primary_key[0].name
                 related_query = self._query.session.query(field["related_class"])
                 if exclude:
-                    print(primary_key)
-                    print(getattr(field["related_class"], primary_key))
-                    print(exclude)
                     if isinstance(exclude, Iterable):
                         return SqlAlchemyQueryModel(related_query
                                                     .filter(getattr(field["related_class"],
@@ -497,12 +494,12 @@ class DisplayWidget(QWidget):
         self.title_edit.textEdited.connect(self.start_edit_mode)
         self.text_edit.document().undoAvailable.connect(self.start_edit_mode)
         self.date_edit.editingFinished.connect(self.start_edit_mode)
-        self.file_edit.itemDoubleClicked.connect(self.start_edit_mode)
         self.add_button.pressed.connect(self.add_pressed)
         self.remove_button.pressed.connect(self.remove_pressed)
         self.submit_button.pressed.connect(self.submit_pressed)
         self.cancel_button.pressed.connect(self.cancel_pressed)
         self.fconnect_button.pressed.connect(self.fconnect_pressed)
+        self.fdisconnect_button.pressed.connect(self.fdisconnect_pressed)
 
     def enable_mapping(self):
         self.mapper.addMapping(self.title_edit, 1)
@@ -604,6 +601,15 @@ class DisplayWidget(QWidget):
                     if column == 0:
                         item.setData(Qt.UserRole, file)
                     self.file_edit.setItem(row, column, item)
+
+    @pyqtSlot()
+    def fdisconnect_pressed(self):
+        if self.file_edit.selectionModel().hasSelection():
+            row = self.file_edit.currentRow()
+            self.file_edit.removeRow(row)
+            self.file_edit.setCurrentCell(-1, -1)
+            self.date_edit.editingFinished.emit()
+
 
 
 class DiaryViewer(QMainWindow):
