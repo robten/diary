@@ -400,6 +400,55 @@ class SqlAlchemySelectDialog(QDialog):
         self.accept()
 
 
+class SqlAlchemyAddFileDialog(QDialog):
+    def __init__(self, caption, parent=None):
+        super(SqlAlchemyAddFileDialog, self).__init__(parent)
+        self.setWindowTitle(caption)
+        self.name_edit = QLineEdit()
+        self.name_edit.setMinimumWidth(300)
+        self.meta_data_display = QPlainTextEdit()
+        self.meta_data_display.setEnabled(False)
+        name_label = QLabel("&Name:")
+        name_label.setBuddy(self.name_edit)
+        meta_data_label = QLabel("&File Info:")
+        meta_data_label.setBuddy(self.meta_data_display)
+
+        # Buttons
+        self.new_button = QPushButton("&Open New File")
+        self.new_button.setDefault(True)
+        self.add_button = QPushButton("&Add")
+        self.add_button.setEnabled(False)
+        self.cancel_button = QPushButton("&Cancel")
+
+        # Layout
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.add_button)
+        button_layout.addWidget(self.cancel_button)
+        dialog_layout = QGridLayout()
+        dialog_layout.addWidget(name_label, 0, 0)
+        dialog_layout.addWidget(self.name_edit, 0, 1)
+        dialog_layout.addWidget(self.new_button, 0, 2)
+        dialog_layout.addWidget(meta_data_label, 1, 0)
+        dialog_layout.addWidget(self.meta_data_display, 1, 1, 1, 2)
+        dialog_layout.addLayout(button_layout, 2, 2, Qt.AlignRight)
+        self.setLayout(dialog_layout)
+
+        # Connection
+        self.new_button.pressed.connect(self.new_pressed)
+        self.cancel_button.pressed.connect(self.reject)
+
+    @pyqtSlot()
+    def new_pressed(self):
+        file_dialog = QFileDialog(parent=self)
+        if file_dialog.exec_():
+            # TODO: Implement File-adding logic
+            self.add_button.setEnabled(True)
+
+    @pyqtSlot()
+    def add_pressed(self):
+        self.accept()
+
+
 class DisplayWidget(QWidget):
     def __init__(self, model, parent=None):
         super(DisplayWidget, self).__init__(parent)
@@ -508,6 +557,7 @@ class DisplayWidget(QWidget):
         self.cancel_button.pressed.connect(self.cancel_pressed)
         self.fconnect_button.pressed.connect(self.fconnect_pressed)
         self.fdisconnect_button.pressed.connect(self.fdisconnect_pressed)
+        self.fadd_button.pressed.connect(self.fadd_pressed)
 
     def enable_mapping(self):
         self.mapper.addMapping(self.title_edit, 1)
@@ -618,6 +668,12 @@ class DisplayWidget(QWidget):
             self.file_edit.removeRow(row)
             self.file_edit.setCurrentCell(-1, -1)
             self.date_edit.editingFinished.emit()  # To trigger start_edit_mode()
+
+    @pyqtSlot()
+    def fadd_pressed(self):
+        dialog = SqlAlchemyAddFileDialog("Add a new File")
+        if dialog.exec_():
+            pass
 
 
 
