@@ -3,7 +3,7 @@
 
 
 from PyQt5.QtCore import QAbstractTableModel, QSortFilterProxyModel, QModelIndex, Qt, QDate,\
-    pyqtSlot
+    pyqtSlot, QStandardPaths
 from PyQt5.QtWidgets import *
 from collections import Iterable
 from sqlalchemy import inspect
@@ -439,9 +439,11 @@ class SqlAlchemyAddFileDialog(QDialog):
 
     @pyqtSlot()
     def new_pressed(self):
-        file_dialog = QFileDialog(parent=self)
+        start_dir = QStandardPaths.standardLocations(QStandardPaths.HomeLocation)[-1]
+        file_dialog = QFileDialog(self)
+        file_dialog.setDirectory(start_dir)
         if file_dialog.exec_():
-            # TODO: Implement File-adding logic
+            # TODO: Implement File-adding logic using storage module
             self.add_button.setEnabled(True)
 
     @pyqtSlot()
