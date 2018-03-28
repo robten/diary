@@ -678,16 +678,32 @@ class DisplayWidget(QWidget):
             pass
 
 
-
 class DiaryViewer(QMainWindow):
     def __init__(self, parent=None):
         super(DiaryViewer, self).__init__(parent)
-
-        # View
-        central_widget = DisplayWidget(self)
-        self.setCentralWidget(central_widget)
+        self.model = None
+        self.sortable_model = None
         self.setGeometry(200, 20, 1500, 1000)
         self.setWindowTitle("Diary")
+
+    def _setup_ui(self):
+        if not self.sortable_model:
+            raise ValueError("No model available, set a data soure first.")
+        central_widget = DisplayWidget(self.sortable_model, self)
+        self.setCentralWidget(central_widget)
+
+    def set_source(self, source):
+        self.model = SqlAlchemyQueryModel(source, self)
+        self.model.set_relation_display("files", "name")
+        self.model.vertical_headers_enabled()
+        self.model.setHeaderData(0, Qt.Horizontal, "ID")
+        self.model.setHeaderData(1, Qt.Horizontal, "Title")
+        self.model.setHeaderData(2, Qt.Horizontal, "Text")
+        self.model.setHeaderData(3, Qt.Horizontal, "Date")
+        self.model.setHeaderData(4, Qt.Horizontal, "Files")
+        self.sortable_model = SortFilterModel(self)
+        self.sortable_model.setSourceModel(self.model)
+        self._setup_ui()
 
 
 def extract_from_table(table_widget, column, key=None):
