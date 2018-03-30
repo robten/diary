@@ -683,8 +683,9 @@ class DiaryViewer(QMainWindow):
         super(DiaryViewer, self).__init__(parent)
         self.model = None
         self.sortable_model = None
-        self.setGeometry(200, 20, 1500, 1000)
         self.setWindowTitle("Diary")
+        if not self.load_settings():
+            self.setGeometry(200, 20, 1500, 1000)
 
     def _setup_ui(self):
         if not self.sortable_model:
@@ -693,6 +694,10 @@ class DiaryViewer(QMainWindow):
         self.setCentralWidget(central_widget)
 
     def set_source(self, source):
+        """
+        Sets the data source used for models inside DiaryView and its widgets.
+        :param sqlalchemy.orm.query.Query source:  Query to the data for display
+        """
         self.model = SqlAlchemyQueryModel(source, self)
         self.model.set_relation_display("files", "name")
         self.model.vertical_headers_enabled()
@@ -704,6 +709,20 @@ class DiaryViewer(QMainWindow):
         self.sortable_model = SortFilterModel(self)
         self.sortable_model.setSourceModel(self.model)
         self._setup_ui()
+
+    def load_settings(self):
+        """
+        Tries to load the saved settings and geometry for this QMainWindow from configmanager of
+        this application.
+        It retruns True if it was successful or False if not.
+        :rtype: bool
+        """
+        # TODO: Use configmanager module to load settings for DiaryViewer and return True
+        return False
+
+    def closeEvent(self, event):
+        # TODO: Use configmanager module to save settings of DiaryViewer
+        super(DiaryViewer, self).closeEvent(event)
 
 
 def extract_from_table(table_widget, column, key=None):
