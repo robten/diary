@@ -368,9 +368,9 @@ class SqlAlchemySelectDialog(QDialog):
         self.selection = list()  # List of selected items from table
 
         # Buttons
-        self.select_button = QPushButton("&Select")
+        self.select_button = QPushButton(qApp.translate("SqlAlchemySelectDialog", "&Select"))
         self.select_button.setEnabled(False)
-        self.cancel_button = QPushButton("&Cancel")
+        self.cancel_button = QPushButton(qApp.translate("SqlAlchemySelectDialog", "&Cancel"))
 
         # Layout
         button_layout = QHBoxLayout()
@@ -408,17 +408,17 @@ class SqlAlchemyAddFileDialog(QDialog):
         self.name_edit.setMinimumWidth(300)
         self.meta_data_display = QPlainTextEdit()
         self.meta_data_display.setEnabled(False)
-        name_label = QLabel("&Name:")
+        name_label = QLabel(qApp.translate("SqlAlchemyAddFileDialog", "&Name:"))
         name_label.setBuddy(self.name_edit)
-        meta_data_label = QLabel("&File Info:")
+        meta_data_label = QLabel(qApp.translate("SqlAlchemyAddFileDialog", "&File Info:"))
         meta_data_label.setBuddy(self.meta_data_display)
 
         # Buttons
-        self.new_button = QPushButton("&Open New File")
+        self.new_button = QPushButton(qApp.translate("SqlAlchemyAddFileDialog", "&Open New File"))
         self.new_button.setDefault(True)
-        self.add_button = QPushButton("&Add")
+        self.add_button = QPushButton(qApp.translate("SqlAlchemyAddFileDialog", "&Add"))
         self.add_button.setEnabled(False)
-        self.cancel_button = QPushButton("&Cancel")
+        self.cancel_button = QPushButton(qApp.translate("SqlAlchemyAddFileDialog", "&Cancel"))
 
         # Layout
         button_layout = QHBoxLayout()
@@ -472,33 +472,34 @@ class DisplayWidget(QWidget):
         self.file_edit.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.file_edit.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.file_edit.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        title_label = QLabel("&Title:")
+        title_label = QLabel(qApp.translate("DisplayWidget", "&Title:"))
         title_label.setBuddy(self.title_edit)
-        text_label = QLabel("T&ext:")
+        text_label = QLabel(qApp.translate("DisplayWidget", "T&ext:"))
         text_label.setBuddy(self.text_edit)
-        date_label = QLabel("&Date:")
+        date_label = QLabel(qApp.translate("DisplayWidget", "&Date:"))
         date_label.setBuddy(self.date_edit)
-        file_label = QLabel("&Files")
+        file_label = QLabel(qApp.translate("DisplayWidget", "&Files"))
         file_label.setBuddy(self.file_edit)
 
         # Buttons
-        self.add_button = QPushButton("&Add")
-        self.remove_button = QPushButton("&Remove")
-        self.submit_button = QPushButton("&Submit")
-        self.cancel_button = QPushButton("&Cancel")
+        self.add_button = QPushButton(qApp.translate("DisplayWidget", "&Add"))
+        self.remove_button = QPushButton(qApp.translate("DisplayWidget", "&Remove"))
+        self.submit_button = QPushButton(qApp.translate("DisplayWidget", "&Submit"))
+        self.cancel_button = QPushButton(qApp.translate("DisplayWidget", "&Cancel"))
         self.submit_button.hide()
         self.cancel_button.hide()
-        self.fadd_button = QPushButton("Add &File")
-        self.fconnect_button = QPushButton("C&onnect File")
-        self.fdisconnect_button = QPushButton("&Disconnect File")
+        self.fadd_button = QPushButton(qApp.translate("DisplayWidget", "Add &File"))
+        self.fconnect_button = QPushButton(qApp.translate("DisplayWidget", "C&onnect File"))
+        self.fdisconnect_button = QPushButton(qApp.translate("DisplayWidget", "&Disconnect File"))
 
         # Mapper &  UI setup
         self.mapper = QDataWidgetMapper()
+        column_names = (qApp.translate("DisplayWidget", "Filename"),
+                        qApp.translate("DisplayWidget", "Filepath"),
+                        qApp.translate("DisplayWidget", "Timestamp"))
         self.mapper.setItemDelegate(SqlAlchemyCollectionDelegate(4,
                                                                  self._file_fields,
-                                                                 column_labels=("Filename",
-                                                                                "Filepath",
-                                                                                "Timestamp"),
+                                                                 column_labels=column_names,
                                                                  parent=self))
         self.mapper.setSubmitPolicy(QDataWidgetMapper.ManualSubmit)
         self.setModel(model)
@@ -636,14 +637,16 @@ class DisplayWidget(QWidget):
                                                      exclude=extract_from_table(self.file_edit,
                                                                                 0,
                                                                                 "id"))
-        sql_model.setHeaderData(1, Qt.Horizontal, "Filename")
-        sql_model.setHeaderData(2, Qt.Horizontal, "Path")
-        sql_model.setHeaderData(4, Qt.Horizontal, "Date")
+        sql_model.setHeaderData(1, Qt.Horizontal, qApp.translate("DisplayWidget", "Filename"))
+        sql_model.setHeaderData(2, Qt.Horizontal, qApp.translate("DisplayWidget", "Path"))
+        sql_model.setHeaderData(4, Qt.Horizontal, qApp.translate("DisplayWidget", "Date"))
         model = SortFilterModel(self)
         model.setSourceModel(sql_model)
 
         # Dialog setup
-        dialog = SqlAlchemySelectDialog(model, "Files to associate this Entry with:")
+        dialog = SqlAlchemySelectDialog(model,
+                                        qApp.translate("DisplayWidget",
+                                                       "Files to associate this Entry with:"))
         dialog.table.hideColumn(0)
         dialog.table.hideColumn(3)
         dialog.table.hideColumn(5)
@@ -673,7 +676,7 @@ class DisplayWidget(QWidget):
 
     @pyqtSlot()
     def fadd_pressed(self):
-        dialog = SqlAlchemyAddFileDialog("Add a new File")
+        dialog = SqlAlchemyAddFileDialog(qApp.translate("DisplayWidget", "Add a new File"))
         if dialog.exec_():
             pass
 
@@ -701,11 +704,11 @@ class DiaryViewer(QMainWindow):
         self.model = SqlAlchemyQueryModel(source, self)
         self.model.set_relation_display("files", "name")
         self.model.vertical_headers_enabled()
-        self.model.setHeaderData(0, Qt.Horizontal, "ID")
-        self.model.setHeaderData(1, Qt.Horizontal, "Title")
-        self.model.setHeaderData(2, Qt.Horizontal, "Text")
-        self.model.setHeaderData(3, Qt.Horizontal, "Date")
-        self.model.setHeaderData(4, Qt.Horizontal, "Files")
+        self.model.setHeaderData(0, Qt.Horizontal, qApp.translate("DiaryViewer", "ID"))
+        self.model.setHeaderData(1, Qt.Horizontal, qApp.translate("DiaryViewer", "Title"))
+        self.model.setHeaderData(2, Qt.Horizontal, qApp.translate("DiaryViewer", "Text"))
+        self.model.setHeaderData(3, Qt.Horizontal, qApp.translate("DiaryViewer", "Date"))
+        self.model.setHeaderData(4, Qt.Horizontal, qApp.translate("DiaryViewer", "Files"))
         self.sortable_model = SortFilterModel(self)
         self.sortable_model.setSourceModel(self.model)
         self._setup_ui()
