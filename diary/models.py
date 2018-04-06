@@ -23,7 +23,7 @@ class Entry(Model):
     timestamp = Column(Date)
     files = relationship("File", secondary=entry_files, back_populates="entries")
 
-    def __init__(self, title, text, timestamp=date.today()):
+    def __init__(self, title="", text="", timestamp=date.today()):
         self.title = title
         self.text = text
         self.timestamp = timestamp
@@ -41,7 +41,7 @@ class File(Model):
     timestamp = Column(Date)
     entries = relationship("Entry", secondary=entry_files, back_populates="files")
 
-    def __init__(self, name, ftype, path="./", timestamp=date.today()):
+    def __init__(self, name="", ftype="", path="./", timestamp=date.today()):
         self.name = name
         self.type = ftype
         self.subpath = path

@@ -2,7 +2,10 @@
 # coding: utf-8
 
 
-from PyQt5.QtCore import QAbstractTableModel, QSortFilterProxyModel, QModelIndex, Qt, QDate
+from PyQt5.QtCore import QAbstractTableModel, QSortFilterProxyModel, QModelIndex, Qt, QDate,\
+    pyqtSlot, QStandardPaths
+from PyQt5.QtWidgets import *
+from collections import Iterable
 from sqlalchemy import inspect
 from datetime import date
 
@@ -16,7 +19,8 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         self._data = list()
         self._header_data = dict()
         self._result_is_collection = False  # query result could be single model class or collection
-        self._v_header_enabled = False  # whether model displays vertical headers (row numbers)
+        self._vheader_enabled = False  # whether model displays vertical headers (row numbers)
+        self._last_insert = QModelIndex()
         self.meta_columns = list()  # Description of all columns in query result
         self.load()
 
@@ -25,8 +29,7 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
             self._result_is_collection = True
         else:
             self._result_is_collection = False
-        column_count = 0
-        for column in self._query.column_descriptions:
+        for column_count, column in enumerate(self._query.column_descriptions):
             if column["expr"] is column["type"]:
                 # column is a model class
                 inspector = inspect(column["type"])
@@ -46,7 +49,8 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
                         "name": relation,
                         "class": inspector.class_,
                         "class_name": inspector.class_.__name__,
-                        "result_position": column_count
+                        "result_position": column_count,
+                        "related_class": getattr(inspector.class_, relation).mapper.class_
                     }
                     self.meta_columns.append(definition)
             elif type(column["expr"]).__name__ == "InstrumentedAttribute":
@@ -62,7 +66,6 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
                 self.meta_columns.append(definition)
             else:
                 raise ValueError("parameter query only excepts tables or individual columns")
-            column_count += 1
 
     def _list_relations(self, index):
         column = index.column()
@@ -78,12 +81,12 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         if len(data) == 0:  # no relations for this item to display
             return ""
         if "relation_key" in self.meta_columns[column]:
-            primay_key = self.meta_columns[column]["relation_key"]
+            primary_key = self.meta_columns[column]["relation_key"]
         else:
-            primay_key = inspect(type(data[0])).primary_key[0].name
+            primary_key = inspect(type(data[0])).primary_key[0].name
         relation_list = list()
         for related_obj in data:
-            relation_list.append(str(getattr(related_obj, primay_key)))
+            relation_list.append(str(getattr(related_obj, primary_key)))
         return ", ".join(relation_list)
 
     def set_relation_display(self, collection, key):
@@ -101,6 +104,34 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         raise ValueError("Collection '{}' was not found in query or is no 'class_relation'."
                          .format(collection))
 
+    def related_table_model(self, collection, key=None, exclude=None):
+        """
+        Method creates a sub-query for the related table of the collection column-name and
+        returns it encapsulated inside a seperate SqlAlchemyQueryModel.
+        :param any or Iterable exclude: optional - A single value or a list/tuple of values to be
+        excluded.
+        :param str key: optional - The key to be used for the value comparison, defaults to primay
+        key if not supplied.
+        :param str collection: Name of the relation collection in the refering model class
+        :return: SqlAlchemyQueryModel
+        """
+        for field in self.meta_columns:
+            if field["name"] == collection and field["type"] == "class_relation":
+                primary_key = key if key else inspect(field["class"]).primary_key[0].name
+                related_query = self._query.session.query(field["related_class"])
+                if exclude:
+                    if isinstance(exclude, Iterable):
+                        return SqlAlchemyQueryModel(related_query
+                                                    .filter(getattr(field["related_class"],
+                                                                    primary_key).notin_(exclude)))
+                    else:
+                        return SqlAlchemyQueryModel(related_query
+                                                    .filter(getattr(field["related_class"],
+                                                                    primary_key) != exclude))
+                return SqlAlchemyQueryModel(related_query)
+        raise ValueError("Collection '{}' was not found in query or is no 'class_relation'."
+                         .format(collection))
+
     def load(self):
         self._data = self._query.all()
         self._analyse_data()
@@ -109,7 +140,10 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         self._query.session.commit()
 
     def vertical_headers_enabled(self, status=True):
-        self._v_header_enabled = status
+        self._vheader_enabled = status
+
+    def inserted_index(self):
+        return self._last_insert
 
     def headerData(self, section, orientation=Qt.Horizontal, role=Qt.DisplayRole):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
@@ -118,7 +152,7 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
                     return self._header_data[section]["caption"]
             return "{}.{}".format(self.meta_columns[section]["class_name"],
                                   self.meta_columns[section]["name"])
-        elif orientation == Qt.Vertical and role == Qt.DisplayRole and self._v_header_enabled:
+        elif orientation == Qt.Vertical and role == Qt.DisplayRole and self._vheader_enabled:
             return int(section) + 1
         return None
 
@@ -132,22 +166,28 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         data = self._data[index.row()]
         column = index.column()
         value = None
-        if role in (Qt.DisplayRole, Qt.EditRole):
+        if role in (Qt.DisplayRole, Qt.EditRole, Qt.UserRole):
             if self._result_is_collection:
+                model_obj = data[self.meta_columns[column]["result_position"]]
                 # handle collections returned by query
                 if self.meta_columns[column]["type"] == "class_attr":
-                    model_obj = data[self.meta_columns[column]["result_position"]]
                     value = getattr(model_obj, self.meta_columns[column]["name"])
                 if self.meta_columns[column]["type"] == "attr":
-                    value = data[self.meta_columns[column]["result_position"]]
+                    value = model_obj
                 if self.meta_columns[column]["type"] == "class_relation":
-                    value = self._list_relations(index)
+                    value = self._list_relations(index) if role == Qt.DisplayRole \
+                        else getattr(model_obj, self.meta_columns[column]["name"])
+                if role == Qt.UserRole:
+                    value = model_obj
             else:
                 # handle single result (only possible, when a single model class was queried for
                 if self.meta_columns[column]["type"] == "class_relation":
-                    value = self._list_relations(index)
+                    value = self._list_relations(index) if role == Qt.DisplayRole \
+                        else getattr(data, self.meta_columns[column]["name"])
                 else:
                     value = getattr(data, self.meta_columns[column]["name"])
+                if role == Qt.UserRole:
+                    value = data
             # Checking value or meta_columns type for individual type representation:
             if isinstance(value, date):
                 value = QDate(value)
@@ -163,15 +203,15 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
             if isinstance(value, QDate):
                 value = value.toPyDate()
             if self._result_is_collection:
+                model_obj = data[self.meta_columns[column]["result_position"]]
                 # handle collections returned by query
                 if self.meta_columns[column]["type"] == "class_attr":
-                    model_obj = data[self.meta_columns[column]["result_position"]]
                     setattr(model_obj, self.meta_columns[column]["name"], value)
                 if self.meta_columns[column]["type"] == "attr":
                     # data[self.meta_columns[column]["result_position"]] = element
                     pass  # TODO: Handle editing for single columns (not easy in SqlAlchemy)
                 if self.meta_columns[column]["type"] == "class_relation":
-                    pass  # TODO: Handle editing of relationships
+                    setattr(model_obj, self.meta_columns[column]["name"], value)
             else:
                 # handle single result (only possible, when a single model class was queried for
                 setattr(data, self.meta_columns[column]["name"], value)
@@ -181,17 +221,64 @@ class SqlAlchemyQueryModel(QAbstractTableModel):
         else:
             return False
 
+    def insertRows(self, row, count, parent=None, *args, **kwargs):
+        if count > 1 or row > self.rowCount():
+            return False
+        column_types = list()
+        for column in self.meta_columns:
+            if column["type"] == "class_attr" and column["class"] not in column_types:
+                column_types.append(column["class"])
+        if 0 < len(column_types) < 2:
+            new_row = column_types[0]()
+        elif 0 < len(column_types) >= 2:
+            new_row = tuple(type_() for type_ in column_types)
+        else:
+            return False
+        self.beginInsertRows(parent, row, row + count - 1)
+        self._last_insert = self.index(row, 0)
+        if row < self.rowCount():
+            self._data.insert(row, new_row)
+        elif row == self.rowCount():
+            self._data.append(new_row)
+        if isinstance(new_row, tuple):
+            self._query.session.add_all(new_row)
+        else:
+            self._query.session.add(new_row)
+        self.endInsertRows()
+        return True
+
+    def removeRows(self, row, count, parent=None, *args, **kwargs):
+        if row < 0 or row > self.rowCount():
+            return False
+        item = self._data[row]  # Only implemented for single row removal, yet
+        self.beginRemoveRows(parent, row, row + count - 1)
+        if type(item).__name__ == "result" or isinstance(item, tuple):
+            for content in item:
+                if content in self._query.session.new:
+                    self._query.session.expunge(content)
+                else:
+                    self._query.session.delete(content)
+        else:
+            if item in self._query.session.new:
+                self._query.session.expunge(item)
+            else:
+                self._query.session.delete(item)
+        self.save()
+        self.load()
+        self.endRemoveRows()
+        return True
+
     def flags(self, index):
         column = index.column()
-        if self.meta_columns[column]["type"] == "class_attr":
+        if self.meta_columns[column]["type"] in ("class_attr", "class_relation"):
             return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
         else:
             return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
-    def columnCount(self, parent=QModelIndex(), *args, **kwargs):
+    def columnCount(self, parent=None, *args, **kwargs):
         return len(self.meta_columns)
 
-    def rowCount(self, parent=QModelIndex(), *args, **kwargs):
+    def rowCount(self, parent=None, *args, **kwargs):
         return len(self._data)
 
 
@@ -203,8 +290,458 @@ class SortFilterModel(QSortFilterProxyModel):
     def keep_vertical_header_order(self, status=True):
         self._keep_vheader_order = status
 
+    def inserted_index(self):
+        source_index = self.sourceModel().inserted_index()
+        return self.mapFromSource(source_index)
+
     def headerData(self, section, orientation=Qt.Horizontal, role=Qt.DisplayRole):
         if self._keep_vheader_order:
             if orientation == Qt.Vertical and role == Qt.DisplayRole:
                 return self.sourceModel().headerData(section, orientation, role)
         return super(SortFilterModel, self).headerData(section, orientation, role)
+
+    def set_relation_display(self, collection, key):
+        self.sourceModel().set_relation_display(collection, key)
+
+    def related_table_model(self, *args, **kwargs):
+        return self.sourceModel().related_table_model(*args, **kwargs)
+
+
+class SqlAlchemyCollectionDelegate(QStyledItemDelegate):
+    def __init__(self, managed_column, displayed_columns, column_labels=None, parent=None):
+        """
+        A generic delegate to manage editing collections of SqlAlchemy relations. To be used only
+        on a QTableWidget as editor (i.e. used by a QDataWidgetMapper).
+        :param managed_column: int, The column of the collection inside the model.
+        :param displayed_columns: Iterable, Which fields of the related model should be displayed.
+        :param column_labels: Iterable, Optional list of label names for column headers.
+        :param parent: QObject
+        """
+        super(SqlAlchemyCollectionDelegate, self).__init__(parent)
+        if not isinstance(displayed_columns, Iterable):
+            raise TypeError("parameter displayed_columns should be an iterable.")
+        self._target_column = managed_column
+        self._source_columns = displayed_columns
+        self._labels = column_labels if column_labels else displayed_columns
+
+    def setEditorData(self, editor, index):
+        if index.column() == self._target_column:
+            collection = index.model().data(index, Qt.EditRole)
+            editor.setColumnCount(len(self._source_columns))
+            editor.setHorizontalHeaderLabels(self._labels)
+            editor.setRowCount(len(collection))
+            for row, element in enumerate(collection):
+                for column, field in enumerate(self._source_columns):
+                    data = getattr(element, field)
+                    if isinstance(data, date):
+                        data = QDate(data)
+                    item = QTableWidgetItem()
+                    item.setData(Qt.DisplayRole, data)
+                    if column == 0:
+                        item.setData(Qt.UserRole, element)
+                    editor.setItem(row, column, item)
+            editor.setCurrentCell(-1, -1)  # cancel any previous selection
+        else:
+            super(SqlAlchemyCollectionDelegate, self).setEditorData(editor, index)
+
+    def setModelData(self, editor, model, index):
+        if index.column() == self._target_column:
+            edited_rows = list()
+            for row in range(editor.rowCount()):
+                edited_rows.append(editor.item(row, 0).data(Qt.UserRole))
+            model.setData(index, edited_rows)
+        else:
+            super(SqlAlchemyCollectionDelegate, self).setModelData(editor, model, index)
+
+
+class SqlAlchemySelectDialog(QDialog):
+    def __init__(self, model, caption, parent=None):
+        super(SqlAlchemySelectDialog, self).__init__(parent)
+        self.setWindowTitle(caption)
+        self.table = QTableView()
+        self.table.setModel(model)
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.table.setSelectionMode(QAbstractItemView.MultiSelection)
+        self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.table.setCurrentIndex(QModelIndex())
+        self.selection = list()  # List of selected items from table
+
+        # Buttons
+        self.select_button = QPushButton(qApp.translate("SqlAlchemySelectDialog", "&Select"))
+        self.select_button.setEnabled(False)
+        self.cancel_button = QPushButton(qApp.translate("SqlAlchemySelectDialog", "&Cancel"))
+
+        # Layout
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.select_button)
+        button_layout.addWidget(self.cancel_button)
+        dialog_layout = QGridLayout()
+        dialog_layout.addWidget(self.table, 0, 0)
+        dialog_layout.addLayout(button_layout, 1, 0, Qt.AlignRight)
+        self.setLayout(dialog_layout)
+        self.setMinimumWidth(self.table.size().width())
+
+        # Connection
+        self.table.selectionModel().selectionChanged.connect(self.update_status)
+        self.select_button.pressed.connect(self.select_items)
+        self.cancel_button.pressed.connect(self.reject)
+
+    @pyqtSlot()
+    def update_status(self):
+        status = True if self.table.selectionModel().hasSelection() else False
+        self.select_button.setEnabled(status)
+        self.table.setCurrentIndex(QModelIndex())
+
+    @pyqtSlot()
+    def select_items(self):
+        for index in self.table.selectionModel().selectedRows():
+            self.selection.append(self.table.model().data(index, Qt.UserRole))
+        self.accept()
+
+
+class SqlAlchemyAddFileDialog(QDialog):
+    def __init__(self, caption, parent=None):
+        super(SqlAlchemyAddFileDialog, self).__init__(parent)
+        self.setWindowTitle(caption)
+        self.name_edit = QLineEdit()
+        self.name_edit.setMinimumWidth(300)
+        self.meta_data_display = QPlainTextEdit()
+        self.meta_data_display.setEnabled(False)
+        name_label = QLabel(qApp.translate("SqlAlchemyAddFileDialog", "&Name:"))
+        name_label.setBuddy(self.name_edit)
+        meta_data_label = QLabel(qApp.translate("SqlAlchemyAddFileDialog", "&File Info:"))
+        meta_data_label.setBuddy(self.meta_data_display)
+
+        # Buttons
+        self.new_button = QPushButton(qApp.translate("SqlAlchemyAddFileDialog", "&Open New File"))
+        self.new_button.setDefault(True)
+        self.add_button = QPushButton(qApp.translate("SqlAlchemyAddFileDialog", "&Add"))
+        self.add_button.setEnabled(False)
+        self.cancel_button = QPushButton(qApp.translate("SqlAlchemyAddFileDialog", "&Cancel"))
+
+        # Layout
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.add_button)
+        button_layout.addWidget(self.cancel_button)
+        dialog_layout = QGridLayout()
+        dialog_layout.addWidget(name_label, 0, 0)
+        dialog_layout.addWidget(self.name_edit, 0, 1)
+        dialog_layout.addWidget(self.new_button, 0, 2)
+        dialog_layout.addWidget(meta_data_label, 1, 0)
+        dialog_layout.addWidget(self.meta_data_display, 1, 1, 1, 2)
+        dialog_layout.addLayout(button_layout, 2, 2, Qt.AlignRight)
+        self.setLayout(dialog_layout)
+
+        # Connection
+        self.new_button.pressed.connect(self.new_pressed)
+        self.cancel_button.pressed.connect(self.reject)
+
+    @pyqtSlot()
+    def new_pressed(self):
+        start_dir = QStandardPaths.standardLocations(QStandardPaths.HomeLocation)[-1]
+        file_dialog = QFileDialog(self)
+        file_dialog.setDirectory(start_dir)
+        if file_dialog.exec_():
+            # TODO: Implement File-adding logic using storage module
+            self.add_button.setEnabled(True)
+
+    @pyqtSlot()
+    def add_pressed(self):
+        self.accept()
+
+
+class DisplayWidget(QWidget):
+    def __init__(self, model, parent=None):
+        super(DisplayWidget, self).__init__(parent)
+        self._last_index = None
+        self._edit_new = False
+        self._file_fields = ("name", "subpath", "timestamp")
+
+        # Widgets
+        self.entry_display = QTableView()
+        self.entry_display.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.entry_display.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.title_edit = QLineEdit()
+        self.text_edit = QPlainTextEdit()
+        self.date_edit = QDateEdit()
+        self.date_edit.setCalendarPopup(True)
+        self.file_edit = QTableWidget()
+        self.file_edit.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
+        self.file_edit.setMaximumHeight(83)
+        self.file_edit.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.file_edit.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.file_edit.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        title_label = QLabel(qApp.translate("DisplayWidget", "&Title:"))
+        title_label.setBuddy(self.title_edit)
+        text_label = QLabel(qApp.translate("DisplayWidget", "T&ext:"))
+        text_label.setBuddy(self.text_edit)
+        date_label = QLabel(qApp.translate("DisplayWidget", "&Date:"))
+        date_label.setBuddy(self.date_edit)
+        file_label = QLabel(qApp.translate("DisplayWidget", "&Files"))
+        file_label.setBuddy(self.file_edit)
+
+        # Buttons
+        self.add_button = QPushButton(qApp.translate("DisplayWidget", "&Add"))
+        self.remove_button = QPushButton(qApp.translate("DisplayWidget", "&Remove"))
+        self.submit_button = QPushButton(qApp.translate("DisplayWidget", "&Submit"))
+        self.cancel_button = QPushButton(qApp.translate("DisplayWidget", "&Cancel"))
+        self.submit_button.hide()
+        self.cancel_button.hide()
+        self.fadd_button = QPushButton(qApp.translate("DisplayWidget", "Add &File"))
+        self.fconnect_button = QPushButton(qApp.translate("DisplayWidget", "C&onnect File"))
+        self.fdisconnect_button = QPushButton(qApp.translate("DisplayWidget", "&Disconnect File"))
+
+        # Mapper &  UI setup
+        self.mapper = QDataWidgetMapper()
+        column_names = (qApp.translate("DisplayWidget", "Filename"),
+                        qApp.translate("DisplayWidget", "Filepath"),
+                        qApp.translate("DisplayWidget", "Timestamp"))
+        self.mapper.setItemDelegate(SqlAlchemyCollectionDelegate(4,
+                                                                 self._file_fields,
+                                                                 column_labels=column_names,
+                                                                 parent=self))
+        self.mapper.setSubmitPolicy(QDataWidgetMapper.ManualSubmit)
+        self.setModel(model)
+        self.enable_mapping()
+        self.entry_display.hideColumn(0)
+        self.entry_display.hideColumn(2)
+        self.entry_display.horizontalHeader().setStretchLastSection(True)
+        self.entry_display.setSortingEnabled(True)
+        self.entry_display.resizeColumnsToContents()
+
+        # Tab Order
+        self.setTabOrder(self.add_button, self.remove_button)
+        self.setTabOrder(self.remove_button, self.title_edit)
+        self.setTabOrder(self.title_edit, self.date_edit)
+        self.setTabOrder(self.date_edit, self.text_edit)
+        self.setTabOrder(self.text_edit, self.file_edit)
+        self.setTabOrder(self.file_edit, self.submit_button)
+        self.setTabOrder(self.submit_button, self.cancel_button)
+
+        # Layout
+        main_layout = QVBoxLayout(self)
+        sub_layout = QHBoxLayout(self)
+        edit_layout = QGridLayout(self)
+        button_layout = QVBoxLayout(self)
+        fbutton_layout = QVBoxLayout(self)
+        fbutton_layout.addWidget(self.fadd_button)
+        fbutton_layout.addWidget(self.fconnect_button)
+        fbutton_layout.addWidget(self.fdisconnect_button)
+        edit_layout.addWidget(title_label, 0, 0)
+        edit_layout.addWidget(self.title_edit, 0, 1)
+        edit_layout.addWidget(date_label, 0, 2)
+        edit_layout.addWidget(self.date_edit, 0, 3)
+        edit_layout.addWidget(text_label, 1, 0, Qt.AlignTop)
+        edit_layout.addWidget(self.text_edit, 1, 1, 1, 3)
+        edit_layout.addWidget(file_label, 2, 0)
+        edit_layout.addWidget(self.file_edit, 2, 1, 1, 2)
+        edit_layout.addLayout(fbutton_layout, 2, 3, Qt.AlignTop)
+        button_layout.addWidget(self.add_button)
+        button_layout.addWidget(self.remove_button)
+        button_layout.addWidget(self.submit_button)
+        button_layout.addWidget(self.cancel_button)
+        button_layout.setAlignment(Qt.AlignTop)
+        sub_layout.addLayout(edit_layout)
+        sub_layout.addLayout(button_layout)
+        main_layout.addWidget(self.entry_display)
+        main_layout.addLayout(sub_layout)
+        self.setLayout(main_layout)
+
+        # Connections
+        self.entry_display.selectionModel().currentRowChanged.connect(
+            self.mapper.setCurrentModelIndex)
+        self.title_edit.textEdited.connect(self.start_edit_mode)
+        self.text_edit.document().undoAvailable.connect(self.start_edit_mode)
+        self.date_edit.editingFinished.connect(self.start_edit_mode)
+        self.add_button.pressed.connect(self.add_pressed)
+        self.remove_button.pressed.connect(self.remove_pressed)
+        self.submit_button.pressed.connect(self.submit_pressed)
+        self.cancel_button.pressed.connect(self.cancel_pressed)
+        self.fconnect_button.pressed.connect(self.fconnect_pressed)
+        self.fdisconnect_button.pressed.connect(self.fdisconnect_pressed)
+        self.fadd_button.pressed.connect(self.fadd_pressed)
+
+    def enable_mapping(self):
+        self.mapper.addMapping(self.title_edit, 1)
+        self.mapper.addMapping(self.text_edit, 2)
+        self.mapper.addMapping(self.date_edit, 3)
+        self.mapper.addMapping(self.file_edit, 4)
+        if self._last_index:
+            self.mapper.setCurrentIndex(self._last_index)
+
+    def disable_mapping(self):
+        self._last_index = self.mapper.currentIndex()
+        self.mapper.clearMapping()
+        self.title_edit.clear()
+        self.text_edit.clear()
+
+    def setModel(self, model):
+        self.entry_display.setModel(model)
+        self.mapper.setModel(model)
+
+    def model(self):
+        return self.entry_display.model()
+
+    @pyqtSlot()
+    def add_pressed(self):
+        model = self.model()
+        row = self.mapper.currentIndex()
+        model.insertRow(row)
+        index = model.inserted_index()
+        self.entry_display.selectRow(index.row())
+        self.mapper.setCurrentModelIndex(index)
+        self.title_edit.setFocus()
+        self._edit_new = True
+        self.start_edit_mode()
+
+    @pyqtSlot()
+    def remove_pressed(self):
+        selected_row = self.entry_display.selectionModel().selectedRows()
+        model = self.model()
+        model.removeRow(selected_row[0].row())
+
+    @pyqtSlot()
+    def submit_pressed(self):
+        self.mapper.submit()
+        self.end_edit_mode()
+
+    @pyqtSlot()
+    def cancel_pressed(self):
+        self.mapper.revert()
+        if self._edit_new:
+            self.remove_pressed()
+            self._edit_new = False
+        self.end_edit_mode()
+
+    @pyqtSlot()
+    def start_edit_mode(self):
+        self.add_button.setDisabled(True)
+        self.remove_button.setDisabled(True)
+        self.submit_button.show()
+        self.cancel_button.show()
+        self.entry_display.setDisabled(True)
+
+    @pyqtSlot()
+    def end_edit_mode(self):
+        self.add_button.setDisabled(False)
+        self.remove_button.setDisabled(False)
+        self.submit_button.hide()
+        self.cancel_button.hide()
+        self.entry_display.setDisabled(False)
+
+    @pyqtSlot()
+    def fconnect_pressed(self):
+        # Model
+        sql_model = self.model().related_table_model("files",
+                                                     exclude=extract_from_table(self.file_edit,
+                                                                                0,
+                                                                                "id"))
+        sql_model.setHeaderData(1, Qt.Horizontal, qApp.translate("DisplayWidget", "Filename"))
+        sql_model.setHeaderData(2, Qt.Horizontal, qApp.translate("DisplayWidget", "Path"))
+        sql_model.setHeaderData(4, Qt.Horizontal, qApp.translate("DisplayWidget", "Date"))
+        model = SortFilterModel(self)
+        model.setSourceModel(sql_model)
+
+        # Dialog setup
+        dialog = SqlAlchemySelectDialog(model,
+                                        qApp.translate("DisplayWidget",
+                                                       "Files to associate this Entry with:"))
+        dialog.table.hideColumn(0)
+        dialog.table.hideColumn(3)
+        dialog.table.hideColumn(5)
+        dialog.table.setSortingEnabled(True)
+        if dialog.exec_():
+            existing_rows = self.file_edit.rowCount()
+            self.file_edit.setRowCount(existing_rows + len(dialog.selection))
+            for row, file in enumerate(dialog.selection, start=existing_rows):
+                for column, field in enumerate(self._file_fields):
+                    data = getattr(file, field)
+                    if isinstance(data, date):
+                        data = QDate(data)
+                    item = QTableWidgetItem()
+                    item.setData(Qt.DisplayRole, data)
+                    if column == 0:
+                        item.setData(Qt.UserRole, file)
+                    self.file_edit.setItem(row, column, item)
+            self.date_edit.editingFinished.emit()  # To trigger start_edit_mode()
+
+    @pyqtSlot()
+    def fdisconnect_pressed(self):
+        if self.file_edit.selectionModel().hasSelection():
+            row = self.file_edit.currentRow()
+            self.file_edit.removeRow(row)
+            self.file_edit.setCurrentCell(-1, -1)
+            self.date_edit.editingFinished.emit()  # To trigger start_edit_mode()
+
+    @pyqtSlot()
+    def fadd_pressed(self):
+        dialog = SqlAlchemyAddFileDialog(qApp.translate("DisplayWidget", "Add a new File"))
+        if dialog.exec_():
+            pass
+
+
+class DiaryViewer(QMainWindow):
+    def __init__(self, parent=None):
+        super(DiaryViewer, self).__init__(parent)
+        self.model = None
+        self.sortable_model = None
+        self.setWindowTitle("Diary")
+        if not self.load_settings():
+            self.setGeometry(200, 20, 1500, 1000)
+
+    def _setup_ui(self):
+        if not self.sortable_model:
+            raise ValueError("No model available, set a data soure first.")
+        central_widget = DisplayWidget(self.sortable_model, self)
+        self.setCentralWidget(central_widget)
+
+    def set_source(self, source):
+        """
+        Sets the data source used for models inside DiaryView and its widgets.
+        :param sqlalchemy.orm.query.Query source:  Query to the data for display
+        """
+        self.model = SqlAlchemyQueryModel(source, self)
+        self.model.set_relation_display("files", "name")
+        self.model.vertical_headers_enabled()
+        self.model.setHeaderData(0, Qt.Horizontal, qApp.translate("DiaryViewer", "ID"))
+        self.model.setHeaderData(1, Qt.Horizontal, qApp.translate("DiaryViewer", "Title"))
+        self.model.setHeaderData(2, Qt.Horizontal, qApp.translate("DiaryViewer", "Text"))
+        self.model.setHeaderData(3, Qt.Horizontal, qApp.translate("DiaryViewer", "Date"))
+        self.model.setHeaderData(4, Qt.Horizontal, qApp.translate("DiaryViewer", "Files"))
+        self.sortable_model = SortFilterModel(self)
+        self.sortable_model.setSourceModel(self.model)
+        self._setup_ui()
+
+    def load_settings(self):
+        """
+        Tries to load the saved settings and geometry for this QMainWindow from configmanager of
+        this application.
+        It retruns True if it was successful or False if not.
+        :rtype: bool
+        """
+        # TODO: Use configmanager module to load settings for DiaryViewer and return True
+        return False
+
+    def closeEvent(self, event):
+        # TODO: Use configmanager module to save settings of DiaryViewer
+        super(DiaryViewer, self).closeEvent(event)
+
+
+def extract_from_table(table_widget, column, key=None):
+    """
+    A generator for contents of a column and key (optional) for each row in a QTableWidget.
+    :param QTableWidget table_widget: The source table to extract from
+    :param int column: The column to extract from
+    :param str key: Optional - The key of a SqlAlchemy table stored under Qt.UserRole
+    """
+    if not isinstance(table_widget, QTableWidget):
+        raise TypeError("'table_widget' must be of Type QTableWidget but instead was of type {}"
+                        .format(type(table_widget)))
+    if key:
+        for row in range(table_widget.rowCount()):
+            data = table_widget.item(row, column).data(Qt.UserRole)
+            yield getattr(data, key)
+    else:
+        for row in range(table_widget.rowCount()):
+            yield table_widget.item(row, column).data(Qt.DisplayRole)
