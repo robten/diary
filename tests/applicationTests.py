@@ -9,10 +9,10 @@ from diary.application import App, Component
 class AppTest(unittest.TestCase):
 
     def setUp(self):
-        self.app = App(conf_component=MagicMock(),
-                       db_component=MagicMock(),
-                       storage_component=MagicMock(),
-                       view_component=MagicMock())
+        self.app = App(conf=MagicMock(),
+                       db=MagicMock(),
+                       storage=MagicMock(),
+                       view=MagicMock())
 
     def test_load_conf_with_path(self):
         test_path = "./testdir/test.conf"

@@ -8,10 +8,10 @@ from diary.storage import FileManager
 from diary.views import TerminalView
 
 
-app = App(conf_component=INImanager(),
-          db_component=DbManager(),
-          storage_component=FileManager(),
-          view_component=TerminalView())
+app = App(conf=INImanager(),
+          db=DbManager(),
+          storage=FileManager(),
+          view=TerminalView())
 app.load_conf("./config/config.ini")
 if not app.is_ready("database"):
     app.setup_storage(location="./config/storage/")

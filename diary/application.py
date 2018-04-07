@@ -11,11 +11,11 @@ class App(metaclass=MetaSingleton):
     It allows to store and read configuration data permanently in a configuration file.
     Beside that it can work as a central hub for managing the aplication flow.
     """
-    def __init__(self, conf_component, db_component, storage_component, view_component):
-        self._conf = conf_component
-        self._db = db_component
-        self._storage = storage_component
-        self._view = view_component
+    def __init__(self, conf=None, db=None, storage=None, view=None):
+        self._conf = conf
+        self._db = db
+        self._storage = storage
+        self._view = view
 
     def load_conf(self, path=None):
         if path:
