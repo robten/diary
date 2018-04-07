@@ -29,12 +29,11 @@ class App(metaclass=MetaSingleton):
 
     def is_ready(self, component):
         attr = "_" + component
-        try:
-            result = self.__dict__[attr].is_valid()
-        except KeyError:
-            raise KeyError("No component by the name of '" + component + "'.")
-        else:
-            return result
+        if not hasattr(self, attr):
+            raise KeyError("App has no component by the name of '{}'.".format(component))
+        if not hasattr(getattr(self, attr), "is_valid"):
+            raise TypeError("No valid component is set for '{}' in App.".format(component))
+        return getattr(self, attr).is_valid()
 
     def setup_database(self, file=":memory:", user=None, password=None, url=None, db=None):
         if user and password and url and db:
