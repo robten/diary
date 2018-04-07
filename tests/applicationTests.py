@@ -16,6 +16,7 @@ class AppTest(unittest.TestCase):
 
     def test_load_conf_with_path(self):
         test_path = "./testdir/test.conf"
+        self.app._conf.is_valid.return_value = True
         self.app.load_conf(test_path)
         self.app._conf.set_source.assert_called_with(path=test_path)
         self.app._conf.load.assert_called_with()
@@ -26,7 +27,7 @@ class AppTest(unittest.TestCase):
         corresponding components ready() returns False (hence component is not set yet).
         """
         self.app._conf.is_valid.return_value = False
-        with self.assertRaises(FileNotFoundError,
+        with self.assertRaises(ValueError,
                                msg="there should be no file set hence non found"):
             self.app.load_conf()
 

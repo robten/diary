@@ -18,13 +18,12 @@ class App(metaclass=MetaSingleton):
         self._view = view
 
     def load_conf(self, path=None):
-        if path:
-            self._conf.set_source(path=path)
-            self._conf.load()
-        elif self.is_ready("conf"):
+        if self.is_ready("conf"):
+            if path:
+                self._conf.set_source(path=path)
             self._conf.load()
         else:
-            raise FileNotFoundError("path not set hence config can't load")
+            raise ValueError("Config component isn't in a valid state, hence config can't load")
         #  TODO: check if any components can be set initially with loaded config file
 
     def is_ready(self, component):
