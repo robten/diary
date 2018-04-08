@@ -26,11 +26,15 @@ class App(metaclass=MetaSingleton):
             raise ValueError("Config component isn't in a valid state, hence config can't load")
         #  TODO: check if any components can be set initially with loaded config file
 
-    def is_ready(self, component):
+    def is_ready(self, component, raising=False):
         if not hasattr(self, component):
-            raise KeyError("App has no component by the name of '{}'.".format(component))
+            if raising:
+                raise KeyError("App has no component by the name of '{}'.".format(component))
+            return False
         if not hasattr(getattr(self, component), "is_valid"):
-            raise TypeError("No valid component is set for '{}' in App.".format(component))
+            if raising:
+                raise TypeError("No valid component is set for '{}' in App.".format(component))
+            return False
         return getattr(self, component).is_valid()
 
     def setup_database(self, file=":memory:", user=None, password=None, url=None, db=None):

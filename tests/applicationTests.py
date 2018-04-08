@@ -48,9 +48,14 @@ class AppTest(unittest.TestCase):
 
     def test_is_ready_with_wrong_component(self):
         self.app.view.is_valid.return_value = True
-        with self.assertRaises(KeyError, msg="is_ready() should reraise KeyError"):
-            self.app.is_ready("wrong_view")
-        self.app.view.is_valid.assert_called_once_with()
+        self.assertFalse(self.app.is_ready("wrong_view"),
+                         msg="is_ready() should return False, if component isn't found")
+
+    def test_is_ready_with_wrong_component_raising(self):
+        self.app.view.is_valid.return_value = True
+        with self.assertRaises(KeyError,
+                               msg="is_ready() should reraise KeyError, if raising is set"):
+            self.app.is_ready("wrong_view", raising=True)
 
     def test_setup_database_for_mysql(self):
         test_kwargs = {"user": "tester",
