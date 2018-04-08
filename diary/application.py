@@ -11,40 +11,39 @@ class App(metaclass=MetaSingleton):
     It allows to store and read configuration data permanently in a configuration file.
     Beside that it can work as a central hub for managing the aplication flow.
     """
-    def __init__(self, conf=None, db=None, storage=None, view=None):
-        self._conf = conf
-        self._db = db
-        self._storage = storage
-        self._view = view
+    def __init__(self, config=None, db=None, storage=None, view=None):
+        self.config = config
+        self.db = db
+        self.storage = storage
+        self.view = view
 
-    def load_conf(self, path=None):
-        if self.is_ready("conf"):
+    def load_config(self, path=None):
+        if self.is_ready("config"):
             if path:
-                self._conf.set_source(path=path)
-            self._conf.load()
+                self.config.set_source(path=path)
+            self.config.load()
         else:
             raise ValueError("Config component isn't in a valid state, hence config can't load")
         #  TODO: check if any components can be set initially with loaded config file
 
     def is_ready(self, component):
-        attr = "_" + component
-        if not hasattr(self, attr):
+        if not hasattr(self, component):
             raise KeyError("App has no component by the name of '{}'.".format(component))
-        if not hasattr(getattr(self, attr), "is_valid"):
+        if not hasattr(getattr(self, component), "is_valid"):
             raise TypeError("No valid component is set for '{}' in App.".format(component))
-        return getattr(self, attr).is_valid()
+        return getattr(self, component).is_valid()
 
     def setup_database(self, file=":memory:", user=None, password=None, url=None, db=None):
         if user and password and url and db:
-            self._db.set(user=user, password=password, url=url, db=db)
+            self.db.set(user=user, password=password, url=url, db=db)
         else:
-            self._db.set(file=file)
+            self.db.set(file=file)
 
     def setup_storage(self, location=None):
-        self._storage.set(location=location)
+        self.storage.set(location=location)
 
     def setup_view(self, **kwargs):
-        self._view.set(**kwargs)
+        self.view.set(**kwargs)
 
     def start(self):
         #  TODO: Implement App.start() when all components are finished
