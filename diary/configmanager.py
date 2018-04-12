@@ -16,21 +16,31 @@ class ManagerBase(Component):
         self._default_section = "DEFAULT"
         self._data = {self._default_section: {}}
 
+    def _check_existence(self, key=None, section=None):
+        section = section if section else self._default_section
+        if section not in self._data:
+            raise KeyError("Config has no section '{}'.".format(section))
+        if key and key not in self._data[section]:
+            raise KeyError("Config has no key '{}' in section '{}'.".format(key, section))
+
     def set(self, key, value, section=None):
         section = section if section else self._default_section
-        if section not in self._data:  # TODO: Handling non-existent sections
+        if section not in self._data:
             self._data[section] = dict()
         self._data[section][key] = value
 
     def get(self, key, section=None):
         section = section if section else self._default_section
+        self._check_existence(key, section)
         return self._data[section][key]
 
     def delete_key(self, key, section=None):
         section = section if section else self._default_section
+        self._check_existence(key, section)
         self._data[section].pop(key)
 
     def delete_section(self, section):
+        self._check_existence(section=section)
         self._data.pop(section)
 
     def set_source(self, path=None, file=None):  # TODO: Add some validation for path & file

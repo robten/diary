@@ -18,7 +18,9 @@ class TestManagerBase(unittest.TestCase):
         """
         Test for expected failure when a non existing key is demanded through get().
         """
-        self.assertRaises(KeyError, self.conf_manager.get, "NonExistent")
+        with self.assertRaises(KeyError,
+                               msg="get() with not existing key should raise KeyError"):
+            self.conf_manager.get("NonExistent")
 
     def test_set_get_key(self):
         """
