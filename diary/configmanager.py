@@ -2,6 +2,8 @@
 # coding: utf-8
 
 import json
+import os
+import io
 from configparser import ConfigParser
 from diary.application import Component
 
@@ -44,9 +46,9 @@ class ManagerBase(Component):
         self._data.pop(section)
 
     def set_source(self, path=None, file=None):  # TODO: Add some validation for path & file
-        if path:
+        if path and os.path.isfile(path):
             self._config_path = path
-        if file:
+        if file and isinstance(file, io.IOBase):
             self._config_file = file
 
     def save(self):
