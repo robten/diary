@@ -18,9 +18,9 @@ class App(metaclass=MetaSingleton):
         self.view = view
 
     def load_config(self, path=None):
+        if path:
+            self.config.set_source(path=path)
         if self.is_ready("config"):
-            if path:
-                self.config.set_source(path=path)
             self.config.load()
         else:
             raise ValueError("Config component isn't in a valid state, hence config can't load")
