@@ -45,7 +45,7 @@ class ManagerBase(Component):
         self._check_existence(section=section)
         self._data.pop(section)
 
-    def set_source(self, path=None, file=None):  # TODO: Add some validation for path & file
+    def set_source(self, path=None, file=None):
         if path and os.path.isfile(path):
             self._config_path = path
         if file and isinstance(file, io.IOBase):
