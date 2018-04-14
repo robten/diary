@@ -18,12 +18,19 @@ class ManagerBase(Component):
         self._default_section = "DEFAULT"
         self._data = {self._default_section: {}}
 
-    def _check_existence(self, key=None, section=None):
+    def has(self, key=None, section=None, raising=False):
         section = section if section else self._default_section
         if section not in self._data:
-            raise KeyError("Config has no section '{}'.".format(section))
+            if raising:
+                raise KeyError("Config has no section '{}'.".format(section))
+            else:
+                return False
         if key and key not in self._data[section]:
-            raise KeyError("Config has no key '{}' in section '{}'.".format(key, section))
+            if raising:
+                raise KeyError("Config has no key '{}' in section '{}'.".format(key, section))
+            else:
+                return False
+        return True
 
     def set(self, key, value, section=None):
         section = section if section else self._default_section
@@ -33,16 +40,16 @@ class ManagerBase(Component):
 
     def get(self, key, section=None):
         section = section if section else self._default_section
-        self._check_existence(key, section)
+        self.has(key, section, raising=True)
         return self._data[section][key]
 
     def delete_key(self, key, section=None):
         section = section if section else self._default_section
-        self._check_existence(key, section)
+        self.has(key, section, raising=True)
         self._data[section].pop(key)
 
     def delete_section(self, section):
-        self._check_existence(section=section)
+        self.has(section=section)
         self._data.pop(section)
 
     def set_source(self, path=None, file=None):
