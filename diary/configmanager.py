@@ -43,14 +43,14 @@ class ManagerBase(Component):
         self.has(key, section, raising=True)
         return self._data[section][key]
 
-    def delete_key(self, key, section=None):
-        section = section if section else self._default_section
-        self.has(key, section, raising=True)
-        self._data[section].pop(key)
-
-    def delete_section(self, section):
-        self.has(section=section)
-        self._data.pop(section)
+    def delete(self, key=None, section=None):
+        if key:
+            section = section if section else self._default_section
+            self.has(key, section, raising=True)
+            self._data[section].pop(key)
+        elif section:
+            self.has(section=section)
+            self._data.pop(section)
 
     def set_source(self, path=None, file=None):
         if path and os.path.isfile(path):

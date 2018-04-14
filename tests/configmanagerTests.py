@@ -33,7 +33,7 @@ class TestManagerBase(unittest.TestCase):
 
     def test_delete_key(self):
         self.conf_manager.set("test_key", "test_value")
-        self.conf_manager.delete_key("test_key")
+        self.conf_manager.delete(key="test_key")
         with self.assertRaises(KeyError, msg="key didn't get deleted by delete_key()"):
             self.conf_manager.get("test_key")
 
@@ -41,11 +41,11 @@ class TestManagerBase(unittest.TestCase):
         self.conf_manager.set("test_key", "test_value")
         with self.assertRaises(KeyError,
                                msg="deleting a non existing key didn't raise a correct exeption."):
-            self.conf_manager.delete_key("wrong_key")
+            self.conf_manager.delete(key="wrong_key")
 
     def test_delete_section(self):
         self.conf_manager.set("test_key", "test_value", "test_section")
-        self.conf_manager.delete_section("test_section")
+        self.conf_manager.delete(section="test_section")
         with self.assertRaises(KeyError, msg="section didn't get deleted by delete_section()"):
             self.conf_manager.get("test_key", "test_section")
 
@@ -53,7 +53,7 @@ class TestManagerBase(unittest.TestCase):
         self.conf_manager.set("test_key", "test_value", "test_section")
         with self.assertRaises(KeyError,
                                msg="deleting a non existing section didn't raise correct exeption."):
-            self.conf_manager.delete_section("wrong_section")
+            self.conf_manager.delete(section="wrong_section")
 
     def test_set_source_with_path(self):
         with tempfile.NamedTemporaryFile() as input_file:
