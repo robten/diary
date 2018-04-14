@@ -18,7 +18,7 @@ class AppTest(unittest.TestCase):
         test_path = "./testdir/test.conf"
         self.app.config.is_valid.return_value = True
         self.app.load_config(test_path)
-        self.app.config.set_source.assert_called_with(path=test_path)
+        self.app.config.initialize.assert_called_with(path=test_path)
         self.app.config.load.assert_called_with()
 
     def test_load_config_unset_without_path(self):
@@ -34,11 +34,11 @@ class AppTest(unittest.TestCase):
     def test_load_config_set_without_path(self):
         """
         Test if load_config() without path argument calles only the components load()
-        without extra call to its set_source().
+        without extra call to its initialize().
         """
         self.app.config.is_valid.return_value = True
         self.app.load_config()
-        self.app.config.set_source.assert_not_called()
+        self.app.config.initialize.assert_not_called()
         self.app.config.load.assert_called_with()
 
     def test_is_ready(self):

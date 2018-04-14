@@ -19,7 +19,7 @@ class App(metaclass=MetaSingleton):
 
     def load_config(self, path=None):
         if path:
-            self.config.set_source(path=path)
+            self.config.initialize(path=path)
         if self.is_ready("config"):
             self.config.load()
         else:

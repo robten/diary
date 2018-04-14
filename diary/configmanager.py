@@ -52,7 +52,7 @@ class ManagerBase(Component):
             self.has(section=section)
             self._data.pop(section)
 
-    def set_source(self, path=None, file=None):
+    def initialize(self, path=None, file=None):
         if path and os.path.isfile(path):
             self._config_path = path
         if file and isinstance(file, io.IOBase):

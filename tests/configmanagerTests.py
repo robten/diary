@@ -58,7 +58,7 @@ class TestManagerBase(unittest.TestCase):
     def test_set_source_with_path(self):
         with tempfile.NamedTemporaryFile() as input_file:
             input_path = os.path.abspath(input_file.name)
-            self.conf_manager.set_source(path=input_path)
+            self.conf_manager.initialize(path=input_path)
             self.assertEqual(input_path,
                              self.conf_manager._config_path,
                              "test_source() did not set path correctly")
@@ -66,13 +66,13 @@ class TestManagerBase(unittest.TestCase):
     def test_set_source_with_invalid_path(self):
         input_path = "/wrong_path/to/file.conf"
         path_before = self.conf_manager._config_path
-        self.conf_manager.set_source(path=input_path)
+        self.conf_manager.initialize(path=input_path)
         path_after =self.conf_manager._config_path
         self.assertEqual(path_before, path_after, msg="invalid path shouldn't set _config_path")
 
     def test_set_source_with_file(self):
         with tempfile.TemporaryFile() as input_file:
-            self.conf_manager.set_source(file=input_file)
+            self.conf_manager.initialize(file=input_file)
             self.assertEqual(input_file,
                              self.conf_manager._config_file,
                              "test_source() did not set file correctly")
@@ -80,7 +80,7 @@ class TestManagerBase(unittest.TestCase):
     def test_set_source_with_invalid_file(self):
         input_file = "not_a_file_type"
         file_before = self.conf_manager._config_file
-        self.conf_manager.set_source(file=input_file)
+        self.conf_manager.initialize(file=input_file)
         file_after = self.conf_manager._config_file
         self.assertEqual(file_before, file_after, msg="invalid file shouldn't set _config_file")
 
