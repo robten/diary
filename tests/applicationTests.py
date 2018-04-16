@@ -9,7 +9,8 @@ from diary.application import App, Component
 class AppTest(unittest.TestCase):
 
     def setUp(self):
-        self.app = App(config=MagicMock(),
+        self.app = App("Test App",
+                       config=MagicMock(),
                        db=MagicMock(),
                        storage=MagicMock(),
                        view=MagicMock())
@@ -57,28 +58,28 @@ class AppTest(unittest.TestCase):
                                msg="is_ready() should reraise KeyError, if raising is set"):
             self.app.is_ready("wrong_view", raising=True)
 
-    def test_setup_database_for_mysql(self):
-        test_kwargs = {"user": "tester",
-                       "password": "testy",
-                       "url": "localhost",
-                       "db": "test"}
-        self.app.setup_database(**test_kwargs)
-        self.app.db.set.assert_called_with(**test_kwargs)
-
-    def test_setup_database_for_sqlite(self):
-        test_kwargs = {"file": "./config/test.db"}
-        self.app.setup_database(**test_kwargs)
-        self.app.db.set.assert_called_with(**test_kwargs)
-
-    def test_setup_storage_for_file(self):
-        test_kwargs = {"location": "./config/storage"}
-        self.app.setup_storage(**test_kwargs)
-        self.app.storage.set.assert_called_with(**test_kwargs)
-
-    def test_setup_view(self):
-        test_kwargs = {"geometry": (800,600)}
-        self.app.setup_view(**test_kwargs)
-        self.app.view.set.assert_called_with(**test_kwargs)
+    # def test_setup_database_for_mysql(self):
+    #     test_kwargs = {"user": "tester",
+    #                    "password": "testy",
+    #                    "url": "localhost",
+    #                    "db": "test"}
+    #     self.app.setup_database(**test_kwargs)
+    #     self.app.db.set.assert_called_with(**test_kwargs)
+    #
+    # def test_setup_database_for_sqlite(self):
+    #     test_kwargs = {"file": "./config/test.db"}
+    #     self.app.setup_database(**test_kwargs)
+    #     self.app.db.set.assert_called_with(**test_kwargs)
+    #
+    # def test_setup_storage_for_file(self):
+    #     test_kwargs = {"location": "./config/storage"}
+    #     self.app.setup_storage(**test_kwargs)
+    #     self.app.storage.set.assert_called_with(**test_kwargs)
+    #
+    # def test_setup_view(self):
+    #     test_kwargs = {"geometry": (800,600)}
+    #     self.app.setup_view(**test_kwargs)
+    #     self.app.view.set.assert_called_with(**test_kwargs)
 
 
 class ComponentTest(unittest.TestCase):

@@ -2,6 +2,8 @@
 # coding: utf-8
 
 from collections import OrderedDict
+import platform
+import os
 
 
 class MetaSingleton(type):
@@ -64,3 +66,29 @@ def print_attr(obj):
     for key, value in obj.__dict__.items():
         if not key.endswith("__") and not callable(value):
             print("{}: {}".format(key, value))
+
+
+def standard_config_dir(app_name):
+    home = os.path.expanduser("~")
+    if platform.system() == "Linux":
+        path = os.path.join(home, ".config", app_name)
+    elif platform.system() == "Windows":
+        path = os.path.join(home, "AppData", "Local", app_name)
+    elif platform.system() == "Darvin":
+        path = os.path.join(home, "Library", "Preferences", app_name)
+    else:
+        path = os.path.join(home, app_name)
+    return path
+
+
+def standard_data_dir(app_name):
+    home = os.path.expanduser("~")
+    if platform.system() == "Linux":
+        path = os.path.join(home, ".local", "data", app_name)
+    elif platform.system() == "Windows":
+        path = os.path.join(home, "AppData", "Local", app_name)
+    elif platform.system() == "Darvin":
+        path = os.path.join(home, "Library", "Application Support", app_name)
+    else:
+        path = os.path.join(home, app_name)
+    return path

@@ -2,7 +2,7 @@
 # coding=utf-8
 
 from functools import wraps
-from utilities import MetaSingleton
+from utilities import MetaSingleton, standard_data_dir
 
 
 class App(metaclass=MetaSingleton):
@@ -11,13 +11,14 @@ class App(metaclass=MetaSingleton):
     It allows to store and read configuration data permanently in a configuration file.
     Beside that it can work as a central hub for managing the aplication flow.
     """
-    def __init__(self, config=None, db=None, storage=None, view=None):
+    def __init__(self, app_name, config=None, db=None, storage=None, view=None):
+        self.name = app_name
         self.config = config
         self.db = db
         self.storage = storage
         self.view = view
         self.default_driver = "sqlite"
-        self.default_root = "./"
+        self.default_root = standard_data_dir(self.name)
 
     def load_config(self, path=None):
         if path:
