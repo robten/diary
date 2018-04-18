@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
+import os
 from functools import wraps
-from utilities import MetaSingleton, standard_data_dir
+from utilities import MetaSingleton, standard_data_dir, standard_config_dir
 
 
 class App(metaclass=MetaSingleton):
@@ -19,10 +20,13 @@ class App(metaclass=MetaSingleton):
         self.view = view
         self.default_driver = "sqlite"
         self.default_root = standard_data_dir(self.name)
+        self.default_config = os.path.join(standard_config_dir(self.name), "config.ini")
 
     def load_config(self, path=None):
-        if path:
-            self.config.initialize(path=path)
+        config_path = path if path else self.default_config
+        if not os.path.isfile(config_path):
+            raise FileNotFoundError("Given or default path '{}' is not valid.".format(config_path))
+        self.config.initialize(path=config_path)
         if self.is_ready("config"):
             self.config.load()
         else:
