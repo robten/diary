@@ -2,7 +2,7 @@
 # coding: utf-8
 
 import json
-import os
+from pathlib import Path
 import io
 from configparser import ConfigParser
 from diary.application import Component
@@ -53,8 +53,11 @@ class ManagerBase(Component):
             self._data.pop(section)
 
     def initialize(self, path=None, file=None):
-        if path and os.path.isfile(path):
+        if isinstance(path, Path) and path.is_file():
             self._config_path = path
+        elif isinstance(path, str) and Path(path).is_file():
+            self._config_path = Path(path)
+
         if file and isinstance(file, io.IOBase):
             self._config_file = file
 

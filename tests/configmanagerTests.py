@@ -3,7 +3,7 @@
 
 import configparser
 import json
-import os
+from pathlib import Path
 import tempfile
 import unittest
 from diary.configmanager import INImanager, JSONmanager, ManagerBase
@@ -57,7 +57,7 @@ class TestManagerBase(unittest.TestCase):
 
     def test_set_source_with_path(self):
         with tempfile.NamedTemporaryFile() as input_file:
-            input_path = os.path.abspath(input_file.name)
+            input_path = Path(input_file.name).absolute()
             self.conf_manager.initialize(path=input_path)
             self.assertEqual(input_path,
                              self.conf_manager._config_path,
@@ -67,7 +67,7 @@ class TestManagerBase(unittest.TestCase):
         input_path = "/wrong_path/to/file.conf"
         path_before = self.conf_manager._config_path
         self.conf_manager.initialize(path=input_path)
-        path_after =self.conf_manager._config_path
+        path_after = self.conf_manager._config_path
         self.assertEqual(path_before, path_after, msg="invalid path shouldn't set _config_path")
 
     def test_set_source_with_file(self):
