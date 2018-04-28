@@ -3,7 +3,7 @@
 
 from collections import OrderedDict
 import platform
-import os
+from pathlib import Path
 
 
 class MetaSingleton(type):
@@ -69,26 +69,24 @@ def print_attr(obj):
 
 
 def standard_config_dir(app_name):
-    home = os.path.expanduser("~")
     if platform.system() == "Linux":
-        path = os.path.join(home, ".config", app_name)
+        path = Path.home() / ".config" / app_name
     elif platform.system() == "Windows":
-        path = os.path.join(home, "AppData", "Local", app_name)
+        path = Path.home() / "AppData" / "Local" / app_name
     elif platform.system() == "Darvin":
-        path = os.path.join(home, "Library", "Preferences", app_name)
+        path = Path.home() / "Library" / "Preferences" / app_name
     else:
-        path = os.path.join(home, app_name)
+        path = Path.home() / app_name
     return path
 
 
 def standard_data_dir(app_name):
-    home = os.path.expanduser("~")
     if platform.system() == "Linux":
-        path = os.path.join(home, ".local", "data", app_name)
+        path = Path.home() / ".local" / "share" / app_name
     elif platform.system() == "Windows":
-        path = os.path.join(home, "AppData", "Local", app_name)
+        path = Path.home() / "AppData" / "Local" / app_name
     elif platform.system() == "Darvin":
-        path = os.path.join(home, "Library", "Application Support", app_name)
+        path = Path.home() / "Library" / "Application Support" / app_name
     else:
-        path = os.path.join(home, app_name)
+        path = Path.home() / app_name
     return path
