@@ -2,7 +2,8 @@
 # coding: utf-8
 
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
+from pathlib import Path
 from diary.application import App, Component
 
 
@@ -16,31 +17,25 @@ class AppTest(unittest.TestCase):
                        view=MagicMock())
 
     def test_load_config_with_path(self):
-        test_path = "./testdir/test.conf"
-        self.app.config.is_valid.return_value = True
-        self.app.load_config(test_path)
-        self.app.config.initialize.assert_called_with(path=test_path)
-        self.app.config.load.assert_called_with()
-
-    def test_load_config_unset_without_path(self):
-        """
-        Test if load_config() without path argument raises the correct error when the
-        corresponding components ready() returns False (hence component is not set yet).
-        """
-        self.app.config.is_valid.return_value = False
-        with self.assertRaises(ValueError,
-                               msg="there should be no file set hence non found"):
-            self.app.load_config()
+        with patch.object(Path, "is_file") as mock_is_file:
+            mock_is_file.return_value = True
+            test_path = "./testdir/test.conf"
+            self.app.config.is_valid.return_value = True
+            self.app.load_config(test_path)
+            self.app.config.initialize.assert_called_with(path=Path(test_path))
+            self.app.config.load.assert_called_with()
 
     def test_load_config_set_without_path(self):
         """
         Test if load_config() without path argument calles only the components load()
         without extra call to its initialize().
         """
-        self.app.config.is_valid.return_value = True
-        self.app.load_config()
-        self.app.config.initialize.assert_not_called()
-        self.app.config.load.assert_called_with()
+        with patch.object(Path, "is_file") as mock_is_file:
+            mock_is_file.return_value = True
+            self.app.config.is_valid.return_value = True
+            self.app.load_config()
+            self.app.config.initialize.assert_called_with(path=self.app.default_config)
+            self.app.config.load.assert_called_with()
 
     def test_is_ready(self):
         self.app.view.is_valid.return_value = True
