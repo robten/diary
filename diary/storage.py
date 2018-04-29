@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-import os
+from pathlib import Path
 import shutil
 from diary.application import Component
 
@@ -12,31 +12,33 @@ class FileManager(Component):
         self._db = backend
         self._compression = compressed
         self._root = self.invalid_state("_root", None)
-        if root and os.path.exists(os.path.abspath(root)):
-            self._root = os.path.abspath(root)
+        if any((root, backend, compressed)):
+            self.set(root, backend, compressed)
 
     def set(self, root=None, backend=None, compressed=None):
-        if root:
-            if os.path.exists(os.path.abspath(root)):
-                self._root = os.path.abspath(root)
-            else:
-                raise NotADirectoryError()
+        if root and isinstance(root, (Path, str)):
+            root_path = Path(root).resolve()
+            if not root_path.is_dir():
+                raise NotADirectoryError(f"Given root={root_path} is not a directory.")
+            self._root = root_path
+        elif root:
+            raise TypeError(f"root is not of type Path or str, it was {type(root)}.")
         if backend:
             self._db = backend
-        if compressed is not None:
+        if compressed:
             self._compression = compressed
 
     @Component.dependent
     def exists(self, item):
-        return os.path.isfile(os.path.join(self._root, item))
+        return (self._root / item).is_file()
 
     @Component.dependent
     def store(self, src, name=None, ftype=None, date=None, hierarchy=None):
-        src_path = os.path.abspath(src)
-        if os.path.isfile(src_path):
-            stored_name = os.path.basename(src_path) if not name else name
+        src_path = Path(src).resolve()
+        if src_path.is_file():
+            stored_name = src_path.name if not name else name
             # TODO: Implement optional storing inside subdirectories (hierarchy)
-            if os.path.exists(os.path.join(self._root, stored_name)):
+            if (self._root / stored_name).is_file():
                 raise FileExistsError("File with the same name is already stored.")
             shutil.copy(src_path, self._root)
             # TODO: Implement optional database storing of meta-data (name, ftype, date, hierarchy)
@@ -45,10 +47,10 @@ class FileManager(Component):
 
     @Component.dependent
     def retrieve(self, item, target):
-        src_path = os.path.join(self._root, item)
-        target_path = os.path.abspath(target)
-        if os.path.isfile(src_path):
-            if os.path.isdir(target_path):
+        src_path = self._root / item
+        target_path = Path(target).resolve()
+        if src_path.is_file():
+            if target_path.is_dir():
                 shutil.copy(src_path, target_path)
             else:
                 raise NotADirectoryError("'{}' is not a valid target directory.".format(target))
@@ -57,17 +59,17 @@ class FileManager(Component):
 
     @Component.dependent
     def delete(self, item):
-        target_path = os.path.join(self._root, item)
-        if os.path.isfile(target_path):
-            os.remove(target_path)
+        target_path = self._root / item
+        if target_path.is_file():
+            shutil.rmtree(target_path)
         else:
             raise FileNotFoundError("'{}' is not in storage or not a valid item.".format(item))
 
     @Component.dependent
     def get_info(self, item):
         # right now there is only an implementation without DB usage
-        src_path = os.path.join(self._root, item)
-        if os.path.isfile(src_path):
-            return {"path": src_path}
+        src_path = self._root / item
+        if src_path.is_file():
+            return {"path": str(src_path)}
         else:
             raise FileNotFoundError("'{}' is not in storage or not a valid item.".format(item))
