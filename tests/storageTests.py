@@ -8,25 +8,25 @@ from diary.storage import FileManager
 
 
 class FileManagerTest(unittest.TestCase):
-    def test_set_root(self):
+    def test_initialize_root(self):
         test_root = "./"
         test = FileManager()
         self.assertIsNone(test._root,
                           msg="unset _root should be None")
-        test.set(root=test_root)
+        test.initialize(root=test_root)
         self.assertEqual(test._root, Path(test_root).resolve(),
                          msg="after set_root() member should match input")
 
-    def test_set_root_fail_nonexisitent(self):
+    def test_initialize_root_fail_nonexisitent(self):
         test_root = "./nonexistent"
         test = FileManager()
         self.assertIsNone(test._root,
                           msg="unset _root should be None")
         with self.assertRaises(NotADirectoryError,
                                msg="set_root() didn't raise Error if root path is invalid"):
-            test.set(root=test_root)
+            test.initialize(root=test_root)
 
-    def test_exists_nonexistent_item(self):
+    def test_has_nonexistent_item(self):
         test_root = "./testroot"
         test_file = "testfile"
         isfile_mock = MagicMock(return_value=False)
@@ -34,10 +34,10 @@ class FileManagerTest(unittest.TestCase):
         with patch("pathlib.Path.is_file", isfile_mock),\
              patch("pathlib.Path.is_dir", isdir_mock):
             test = FileManager(root=test_root)
-            self.assertFalse(test.exists(test_file),
+            self.assertFalse(test.has(test_file),
                              msg="exists() should return False, when test_file was not created yet")
 
-    def test_exists_existent_item(self):
+    def test_has_existent_item(self):
         test_root = "./testroot"
         test_file = "testfile"
         isfile_mock = MagicMock(return_value=True)
@@ -45,14 +45,14 @@ class FileManagerTest(unittest.TestCase):
         with patch("pathlib.Path.is_file", isfile_mock),\
              patch("pathlib.Path.is_dir", isdir_mock):
             test = FileManager(root=test_root)
-            self.assertTrue(test.exists(test_file),
+            self.assertTrue(test.has(test_file),
                             msg="exists() should return True, when test_file was created")
 
-    def test_exists_invalid_state(self):
+    def test_has_invalid_state(self):
         test = FileManager()
         with self.assertRaises(ValueError,
                                msg="ValueError missing when exists() is called in invalid state"):
-            test.exists("~/")
+            test.has("~/")
         with self.assertRaises(ValueError,
                                msg="ValueError missing when store() is called in invalid state"):
             test.store("test")

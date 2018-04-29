@@ -13,9 +13,9 @@ class FileManager(Component):
         self._compression = compressed
         self._root = self.invalid_state("_root", None)
         if any((root, backend, compressed)):
-            self.set(root, backend, compressed)
+            self.initialize(root, backend, compressed)
 
-    def set(self, root=None, backend=None, compressed=None):
+    def initialize(self, root=None, backend=None, compressed=None):
         if root and isinstance(root, (Path, str)):
             root_path = Path(root).resolve()
             if not root_path.is_dir():
@@ -29,7 +29,7 @@ class FileManager(Component):
             self._compression = compressed
 
     @Component.dependent
-    def exists(self, item):
+    def has(self, item):
         return (self._root / item).is_file()
 
     @Component.dependent
