@@ -7,15 +7,14 @@ from diary.application import Component
 
 
 class FileManager(Component):
-    def __init__(self, root=None, backend=None, compressed=False):
+    def __init__(self, root=None, db=None):
         super(FileManager, self).__init__()
-        self._db = backend
-        self._compression = compressed
+        self._db = self.invalid_state("_db", None)
         self._root = self.invalid_state("_root", None)
-        if any((root, backend, compressed)):
-            self.initialize(root, backend, compressed)
+        if any((root, db)):
+            self.initialize(root, db)
 
-    def initialize(self, root=None, backend=None, compressed=None):
+    def initialize(self, root=None, db=None):
         if root and isinstance(root, (Path, str)):
             root_path = Path(root).resolve()
             if not root_path.is_dir():
@@ -23,10 +22,8 @@ class FileManager(Component):
             self._root = root_path
         elif root:
             raise TypeError(f"root is not of type Path or str, it was {type(root)}.")
-        if backend:
-            self._db = backend
-        if compressed:
-            self._compression = compressed
+        if db:
+            self._db = db
 
     @Component.dependent
     def has(self, item):
