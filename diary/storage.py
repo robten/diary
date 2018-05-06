@@ -7,23 +7,31 @@ from diary.application import Component
 
 
 class FileManager(Component):
-    def __init__(self, root=None, db=None):
+    def __init__(self, root=None, db=None, table_cls=None):
         super(FileManager, self).__init__()
         self._db = self.invalid_state("_db", None)
+        self._table_cls = self.invalid_state("_table_cls", None)
         self._root = self.invalid_state("_root", None)
-        if any((root, db)):
-            self.initialize(root, db)
+        if all((root, db, table_cls)):
+            self.initialize(root, db, table_cls)
 
-    def initialize(self, root=None, db=None):
-        if root and isinstance(root, (Path, str)):
+    def initialize(self, root, db, table_cls):
+        """
+        Sets the valid state of the FileManager
+        :param pathlib.Path or str root: Path to file storage location
+        :param diary.database.DbManager db: DB used as a backend for metadata
+        :param sqlalchemy.ext.declarative.api.DeclarativeMeta table_cls: Class of the table for
+        storing file metadata
+        """
+        if isinstance(root, (Path, str)):
             root_path = Path(root).resolve()
             if not root_path.is_dir():
                 raise NotADirectoryError(f"Given root={root_path} is not a directory.")
             self._root = root_path
-        elif root:
+        else:
             raise TypeError(f"root is not of type Path or str, it was {type(root)}.")
-        if db:
-            self._db = db
+        self._db = db
+        self._table_cls = table_cls
 
     @Component.dependent
     def has(self, item):
