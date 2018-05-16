@@ -38,15 +38,21 @@ class FileManager(Component):
         return (self._root / item).is_file()
 
     @Component.dependent
-    def store(self, src, name=None, ftype=None, date=None, hierarchy=None):
+    def store(self, src, name=None, ftype=None, subdir=None):
         src_path = Path(src).resolve()
+        target_path = self._root / Path(subdir if subdir else ".") / src_path.name
         if src_path.is_file():
-            stored_name = src_path.name if not name else name
-            # TODO: Implement optional storing inside subdirectories (hierarchy)
-            if (self._root / stored_name).is_file():
+            stored_name = name if name else src_path.stem
+            if target_path.is_file():
                 raise FileExistsError("File with the same name is already stored.")
+            if self._db.read(self._table_cls).filter(self._table_cls.name==stored_name).first():
+                raise ValueError("File by that name is already stored in database.")
             shutil.copy(src_path, self._root)
-            # TODO: Implement optional database storing of meta-data (name, ftype, date, hierarchy)
+            meta_data = self._table_cls(name=stored_name,
+                                        ftype=ftype if ftype else src_path.suffix[1:],
+                                        path=subdir if subdir else "./")
+            self._db.add(meta_data)
+            self._db.commit()
         else:
             raise ValueError("FileManager.store() should only be called with a path to a file.")
 

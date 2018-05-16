@@ -75,23 +75,32 @@ class FileManagerTest(unittest.TestCase):
             test.get_info("test")
 
     def test_store_new_file(self):
-        test_root = "./testroot"
+        test_root = "./"
         db_mock = MagicMock()
+        filter_mock = MagicMock()
+        query_mock = MagicMock()
+        query_mock.first.return_value = None
+        filter_mock.filter.return_value = query_mock
+        db_mock.read.return_value = filter_mock
         table_mock = MagicMock()
         test_file = "storage_test.py"
+        test_kwargs ={"name": "testfile"}
         source_location = "/tmp"
         source_path = Path(source_location).resolve() / test_file
         target_path = Path(test_root).resolve()
         isfile_mock = MagicMock(side_effect=[True, False])
-        isdir_mock = MagicMock(return_value=True)
         copy_mock = MagicMock()
         with patch("shutil.copy", copy_mock),\
-             patch("pathlib.Path.is_dir", isdir_mock),\
              patch("pathlib.Path.is_file", isfile_mock):
                 test = FileManager(test_root, db_mock, table_mock)
-                test.store(source_location + "/" + test_file)
+                test.store(source_location + "/" + test_file, **test_kwargs)
         isfile_mock.assert_called_with()
         copy_mock.assert_called_with(source_path, target_path)
+        table_mock.assert_called_with(name="testfile",
+                                      ftype="py",
+                                      path="./")
+        db_mock.add.assert_called()
+        db_mock.commit.assert_called()
 
     def test_retrieve(self):
         test_root = "./testroot"
