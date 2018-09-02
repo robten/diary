@@ -45,7 +45,7 @@ class FileManager(Component):
             stored_name = name if name else src_path.stem
             if target_path.is_file():
                 raise FileExistsError("File with the same name is already stored.")
-            if self._db.read(self._table_cls).filter(self._table_cls.name==stored_name).first():
+            if self._db.read(self._table_cls).filter(self._table_cls.name == stored_name).first():
                 raise ValueError("File by that name is already stored in database.")
             shutil.copy(src_path, self._root)
             meta_data = self._table_cls(name=stored_name,
@@ -57,16 +57,19 @@ class FileManager(Component):
             raise ValueError("FileManager.store() should only be called with a path to a file.")
 
     @Component.dependent
-    def retrieve(self, item, target):
-        src_path = self._root / item
-        target_path = Path(target).resolve()
-        if src_path.is_file():
-            if target_path.is_dir():
-                shutil.copy(src_path, target_path)
-            else:
-                raise NotADirectoryError("'{}' is not a valid target directory.".format(target))
+    def retrieve(self, name=None, id=None):
+        if name:
+            file = self._db.read(self._table_cls).filter(self._table_cls.name == name).first()
+        elif id:
+            file = self._db.read(self._table_cls).filter(self._table_cls.id == id).first()
         else:
-            raise FileNotFoundError("'{}' is not in storage or not a valid item.".format(item))
+            return None
+        file_name = file.name + "." + file.type
+        path = self._root / file.subpath / file_name
+        if path.is_file():
+            return path
+        else:
+            return None
 
     @Component.dependent
     def delete(self, item):

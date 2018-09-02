@@ -105,20 +105,31 @@ class FileManagerTest(unittest.TestCase):
     def test_retrieve(self):
         test_root = "./testroot"
         db_mock = MagicMock()
+        filter_mock = MagicMock()
+        query_mock = MagicMock()
+        file_mock = MagicMock()
+        query_mock.first.return_value = file_mock
+        filter_mock.filter.return_value = query_mock
+        db_mock.read.return_value = filter_mock
         table_mock = MagicMock()
+        test_name = "storage_test"
         test_file = "storage_test.py"
-        target_dir = "/tmp/testdir"
+        file_mock.id = 1
+        file_mock.name = test_name
+        file_mock.subpath = "./"
+        file_mock.type = Path(test_file).suffix[1:]
+        file_mock.timestamp = "2018-05-21"
+        file_mock.entries = []
         src_path = Path(test_root).resolve() / test_file
-        target_path = Path(target_dir).resolve()
-        isdir_mock = MagicMock(return_value=True)
         isfile_mock = MagicMock(return_value=True)
-        copy_mock = MagicMock()
-        with patch("pathlib.Path.is_dir", isdir_mock),\
-             patch("pathlib.Path.is_file", isfile_mock),\
-             patch("shutil.copy", copy_mock):
+        isdir_mock = MagicMock(return_value=True)
+        with patch("pathlib.Path.is_file", isfile_mock),\
+             patch("pathlib.Path.is_dir", isdir_mock):
                 test = FileManager(test_root, db_mock, table_mock)
-                test.retrieve(test_file, target_dir)
-        copy_mock.assert_called_with(src_path, target_path)
+                result_name = test.retrieve(name=test_name)
+                result_id = test.retrieve(id=1)
+                self.assertEqual(result_name, src_path)
+                self.assertEqual(result_id, src_path)
 
     def test_delete(self):
         test_root = "./testroot"
