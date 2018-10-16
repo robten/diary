@@ -40,7 +40,8 @@ class FileManager(Component):
     @Component.dependent
     def store(self, src, name=None, ftype=None, subdir=None):
         src_path = Path(src).resolve()
-        target_path = self._root / Path(subdir if subdir else ".") / src_path.name
+        subpath = Path(subdir if subdir else ".") / src_path.name
+        target_path = self._root / subpath
         if src_path.is_file():
             stored_name = name if name else src_path.stem
             if target_path.is_file():
@@ -49,8 +50,8 @@ class FileManager(Component):
                 raise ValueError("File by that name is already stored in database.")
             shutil.copy(src_path, self._root)
             meta_data = self._table_cls(name=stored_name,
-                                        ftype=ftype if ftype else src_path.suffix[1:],
-                                        path=subdir if subdir else "./")
+                                        ftype=ftype if ftype else subpath.suffix[1:],
+                                        path=str(subpath))
             self._db.add(meta_data)
             self._db.commit()
         else:
@@ -64,12 +65,11 @@ class FileManager(Component):
             file = self._db.read(self._table_cls).filter(self._table_cls.id == id).first()
         else:
             return None
-        file_name = file.name + "." + file.type
-        path = self._root / file.subpath / file_name
+        path = self._root / file.subpath
         if path.is_file():
             return path
         else:
-            return None
+            raise FileNotFoundError("File in DB but wasn't found in storage location.")
 
     @Component.dependent
     def delete(self, item):

@@ -98,7 +98,7 @@ class FileManagerTest(unittest.TestCase):
         copy_mock.assert_called_with(source_path, target_path)
         table_mock.assert_called_with(name="testfile",
                                       ftype="py",
-                                      path="./")
+                                      path=test_file)
         db_mock.add.assert_called()
         db_mock.commit.assert_called()
 
@@ -112,11 +112,11 @@ class FileManagerTest(unittest.TestCase):
         filter_mock.filter.return_value = query_mock
         db_mock.read.return_value = filter_mock
         table_mock = MagicMock()
-        test_name = "storage_test"
+        test_name = "storage test"
         test_file = "storage_test.py"
         file_mock.id = 1
         file_mock.name = test_name
-        file_mock.subpath = "./"
+        file_mock.subpath = test_file
         file_mock.type = Path(test_file).suffix[1:]
         file_mock.timestamp = "2018-05-21"
         file_mock.entries = []
