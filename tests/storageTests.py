@@ -34,27 +34,71 @@ class FileManagerTest(unittest.TestCase):
         test_root = "./testroot"
         db_mock = MagicMock()
         table_mock = MagicMock()
-        test_file = "testfile"
+        filter_mock = MagicMock()
+        file_mock = MagicMock()
+        query_mock = MagicMock()
+        query_mock.first.return_value = file_mock
+        filter_mock.filter.return_value = query_mock
+        db_mock.read.return_value = filter_mock
         isfile_mock = MagicMock(return_value=False)
         isdir_mock = MagicMock(return_value=True)
+        test_name = "storage test"
+        test_file = "storage_test.py"
+        file_mock.id = 1
+        file_mock.name = test_name
+        file_mock.subpath = test_file
+        file_mock.type = Path(test_file).suffix[1:]
+        file_mock.timestamp = "2018-05-21"
+        file_mock.entries = []
         with patch("pathlib.Path.is_file", isfile_mock),\
              patch("pathlib.Path.is_dir", isdir_mock):
             test = FileManager(test_root, db_mock, table_mock)
-            self.assertFalse(test.has(test_file),
-                             msg="exists() should return False, when test_file was not created yet")
+            self.assertFalse(test.has(test_name),
+                             msg="has() should return False, when test_file is in db but not on fs")
+
+    def test_has_nonexistent_item_in_db(self):
+        test_root = "./testroot"
+        db_mock = MagicMock()
+        table_mock = MagicMock()
+        filter_mock = MagicMock()
+        query_mock = MagicMock()
+        query_mock.first.return_value = None
+        filter_mock.filter.return_value = query_mock
+        db_mock.read.return_value = filter_mock
+        isfile_mock = MagicMock(return_value=True)
+        isdir_mock = MagicMock(return_value=True)
+        test_name = "storage test"
+        with patch("pathlib.Path.is_file", isfile_mock),\
+             patch("pathlib.Path.is_dir", isdir_mock):
+            test = FileManager(test_root, db_mock, table_mock)
+            self.assertFalse(test.has(test_name),
+                             msg="has() should return False, when test_name is not in db")
 
     def test_has_existent_item(self):
         test_root = "./testroot"
         db_mock = MagicMock()
         table_mock = MagicMock()
-        test_file = "testfile"
+        filter_mock = MagicMock()
+        file_mock = MagicMock()
+        query_mock = MagicMock()
+        query_mock.first.return_value = file_mock
+        filter_mock.filter.return_value = query_mock
+        db_mock.read.return_value = filter_mock
         isfile_mock = MagicMock(return_value=True)
         isdir_mock = MagicMock(return_value=True)
+        test_name = "storage test"
+        test_file = "storage_test.py"
+        file_mock.id = 1
+        file_mock.name = test_name
+        file_mock.subpath = test_file
+        file_mock.type = Path(test_file).suffix[1:]
+        file_mock.timestamp = "2018-05-21"
+        file_mock.entries = []
         with patch("pathlib.Path.is_file", isfile_mock),\
              patch("pathlib.Path.is_dir", isdir_mock):
             test = FileManager(test_root, db_mock, table_mock)
-            self.assertTrue(test.has(test_file),
-                            msg="exists() should return True, when test_file was created")
+            self.assertTrue(test.has(test_name),
+                            msg="has() should return True, when test_name is in db and fs")
 
     def test_has_invalid_state(self):
         test = FileManager()

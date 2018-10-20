@@ -34,8 +34,17 @@ class FileManager(Component):
         self._table_cls = table_cls
 
     @Component.dependent
-    def has(self, item):
-        return (self._root / item).is_file()
+    def has(self, name=None, id=None):
+        if name:
+            file = self._db.read(self._table_cls).filter(self._table_cls.name == name).first()
+        elif id:
+            file = self._db.read(self._table_cls).filter(self._table_cls.id == id).first()
+        else:
+            return False
+        if file:
+            return (self._root / file.subpath).is_file()
+        else:
+            return False
 
     @Component.dependent
     def store(self, src, name=None, ftype=None, subdir=None):
