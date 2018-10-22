@@ -81,12 +81,21 @@ class FileManager(Component):
             raise FileNotFoundError("File in DB but wasn't found in storage location.")
 
     @Component.dependent
-    def delete(self, item):
-        target_path = self._root / item
-        if target_path.is_file():
-            shutil.rmtree(target_path)
+    def delete(self, name=None, id=None):
+        if name:
+            file = self._db.read(self._table_cls).filter(self._table_cls.name == name).first()
+        elif id:
+            file = self._db.read(self._table_cls).filter(self._table_cls.id == id).first()
         else:
-            raise FileNotFoundError("'{}' is not in storage or not a valid item.".format(item))
+            raise AttributeError("No parameter was given.")
+        if file:
+            stored_path = self._root / file.subpath
+            if stored_path.is_file():
+                shutil.rmtree(stored_path)  # TODO: should delete file and dir only if empty
+            else:
+                raise FileNotFoundError("File to db entry was not found on disk.")
+        else:
+            raise LookupError("File not found in db.")
 
     @Component.dependent
     def get_info(self, item):
