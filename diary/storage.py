@@ -98,10 +98,14 @@ class FileManager(Component):
             raise LookupError("File not found in db.")
 
     @Component.dependent
-    def get_info(self, item):
-        # right now there is only an implementation without DB usage
-        src_path = self._root / item
-        if src_path.is_file():
-            return {"path": str(src_path)}
+    def get_info(self, name=None, id=None):
+        if name:
+            file = self._db.read(self._table_cls).filter(self._table_cls.name == name).first()
+        elif id:
+            file = self._db.read(self._table_cls).filter(self._table_cls.id == id).first()
         else:
-            raise FileNotFoundError("'{}' is not in storage or not a valid item.".format(item))
+            raise AttributeError("No parameter was given.")
+        if file:
+            return file
+        else:
+            raise LookupError("File not found in db.")

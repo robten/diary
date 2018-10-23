@@ -207,19 +207,27 @@ class FileManagerTest(unittest.TestCase):
     def test_get_info(self):
         test_root = "./testroot"
         db_mock = MagicMock()
+        filter_mock = MagicMock()
+        query_mock = MagicMock()
+        file_mock = MagicMock()
+        query_mock.first.return_value = file_mock
+        filter_mock.filter.return_value = query_mock
+        db_mock.read.return_value = filter_mock
         table_mock = MagicMock()
+        test_name = "storage test"
         test_file = "storage_test.py"
-        src_path = Path(test_root).resolve() / test_file
-        isfile_mock = MagicMock(return_value=True)
+        file_mock.id = 1
+        file_mock.name = test_name
+        file_mock.subpath = test_file
+        file_mock.type = Path(test_file).suffix[1:]
+        file_mock.timestamp = "2018-05-21"
+        file_mock.entries = []
         isdir_mock = MagicMock(return_value=True)
-        with patch("pathlib.Path.is_file", isfile_mock),\
-             patch("pathlib.Path.is_dir", isdir_mock):
+        with patch("pathlib.Path.is_dir", isdir_mock):
             test = FileManager(test_root, db_mock, table_mock)
-            result_obj = test.get_info(test_file)
-        self.assertIn("path", result_obj,
-                      msg="Returned Obj should have a key or attribute named 'path'.")
-        self.assertEqual(result_obj["path"], str(src_path),
-                         msg="Returned Obj's 'path' should match '{}'.".format(src_path))
+            result_obj = test.get_info(name=test_name)
+        self.assertEqual(result_obj.subpath, test_file,
+                         msg="Returned Obj's 'subpath' should match '{}'.".format(test_file))
 
 
 if __name__ == "__main__":
