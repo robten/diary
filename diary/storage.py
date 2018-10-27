@@ -91,7 +91,9 @@ class FileManager(Component):
         if file:
             stored_path = self._root / file.subpath
             if stored_path.is_file():
-                shutil.rmtree(stored_path)  # TODO: should delete file and dir only if empty
+                stored_path.unlink()
+                print(stored_path.parent)
+                self._cleanup(stored_path.parent)
             else:
                 raise FileNotFoundError("File to db entry was not found on disk.")
         else:
@@ -109,3 +111,14 @@ class FileManager(Component):
             return file
         else:
             raise LookupError("File not found in db.")
+
+    def _cleanup(self, path):
+        if path.is_file():
+            raise NotADirectoryError("Given Path is not a directory")
+        dirs = [item for item in path.iterdir() if item.is_dir()]
+        files = [item for item in path.iterdir() if item.is_file()]
+        if dirs:
+            for directory in dirs:
+                self._cleanup(directory)
+        if not files and not dirs:
+            path.rmdir()

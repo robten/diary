@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import unittest
+import tempfile
 from unittest.mock import MagicMock, patch
 from pathlib import Path
 from diary.storage import FileManager
@@ -196,13 +197,16 @@ class FileManagerTest(unittest.TestCase):
         src_path = Path(test_root).resolve() / test_file
         isfile_mock = MagicMock(return_value=True)
         isdir_mock = MagicMock(return_value=True)
-        remove_mock = MagicMock()
+        unlink_mock = MagicMock()
+        cleanup_mock = MagicMock()
         with patch("pathlib.Path.is_file", isfile_mock),\
              patch("pathlib.Path.is_dir", isdir_mock),\
-             patch("shutil.rmtree", remove_mock):
+             patch("pathlib.Path.unlink", unlink_mock),\
+             patch("diary.storage.FileManager._cleanup", cleanup_mock):
                 test = FileManager(test_root, db_mock, table_mock)
-                test.delete(test_file)
-        remove_mock.assert_called_with(src_path)
+                test.delete(name=test_file)
+        unlink_mock.assert_called()
+        cleanup_mock.assert_called_with(src_path.parent)
 
     def test_get_info(self):
         test_root = "./testroot"
@@ -228,6 +232,21 @@ class FileManagerTest(unittest.TestCase):
             result_obj = test.get_info(name=test_name)
         self.assertEqual(result_obj.subpath, test_file,
                          msg="Returned Obj's 'subpath' should match '{}'.".format(test_file))
+
+    def test__cleanup(self):
+        test_root = "./"
+        db_mock = MagicMock()
+        table_mock = MagicMock()
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            test_hierachy = root / "test1" / "test2" / "test3"
+            test_hierachy.mkdir(parents=True, exist_ok=True)
+            test_file = test_hierachy.parent / "testfile.txt"
+            test_file.touch()
+            tester = FileManager(test_root, db_mock, table_mock)
+            tester._cleanup(root)
+            self.assertTrue(test_hierachy.parent.exists())
+            self.assertFalse(test_hierachy.exists())
 
 
 if __name__ == "__main__":
