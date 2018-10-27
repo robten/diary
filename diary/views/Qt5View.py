@@ -607,7 +607,7 @@ class DisplayWidget(QWidget):
         self.end_edit_mode()
 
     @pyqtSlot()
-    def cancel_pressed(self):
+    def cancel_pressed(self):  # FIXME: [BUG] Deletes random entry if new one was submitted before.
         self.mapper.revert()
         if self._edit_new:
             self.remove_pressed()
