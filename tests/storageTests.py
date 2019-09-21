@@ -31,6 +31,15 @@ class FileManagerTest(unittest.TestCase):
                                msg="set_root() didn't raise Error if root path is invalid"):
             test.initialize(test_root, db_mock, table_mock)
 
+    def test_initialize_root_with_not_pathlike(self):
+        test_root = 1234
+        db_mock = MagicMock()
+        table_mock = MagicMock()
+        test = FileManager()
+        with self.assertRaises(TypeError,
+                               msg="giving a wrong type to initialize() root should raise error"):
+            test.initialize(test_root, db_mock,table_mock)
+
     def test_has_nonexistent_item(self):
         test_root = "./testroot"
         db_mock = MagicMock()

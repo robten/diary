@@ -29,7 +29,7 @@ class FileManager(Component):
                 raise NotADirectoryError(f"Given root={root_path} is not a directory.")
             self._root = root_path
         else:
-            raise TypeError(f"root is not of type Path or str, it was {type(root)}.")
+            raise TypeError(f"root is not of type pathlib.Path or str, it was {type(root)}.")
         self._db = db
         self._table_cls = table_cls
 
