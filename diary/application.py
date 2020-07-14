@@ -4,13 +4,14 @@
 from pathlib import Path
 from functools import wraps
 from utilities import MetaSingleton, standard_data_dir, standard_config_dir
+from abc import ABCMeta, abstractmethod
 
 
 class App(metaclass=MetaSingleton):
     """
     A Class for storing and managing components of an application.
     It allows to store and read configuration data permanently in a configuration file.
-    Beside that it can work as a central hub for managing the aplication flow.
+    Beside that it can work as a central hub for managing the application flow.
     """
     def __init__(self, app_name, config=None, db=None, storage=None, view=None):
         self.name = app_name
@@ -38,7 +39,7 @@ class App(metaclass=MetaSingleton):
             raise ValueError("Config component isn't in a valid state, hence config can't load")
         #  TODO: check if any components can be set initially with loaded config file
 
-    def config_init_db(self, section="DATABASE"):
+    def config_init_db(self, section="DATABASE"):  # TODO: obsolete (in component)
         if not self.is_ready("config"):
             return False
         conf = self.config
@@ -60,7 +61,7 @@ class App(metaclass=MetaSingleton):
         else:
             return False
 
-    def config_init_storage(self, section="STORAGE"):
+    def config_init_storage(self, section="STORAGE"):  # TODO: obsolete (in component)
         if not self.is_ready("storage"):
             return False
         conf = self.config
@@ -92,13 +93,13 @@ class App(metaclass=MetaSingleton):
         pass
 
 
-class Component:
+class Component(metaclass=ABCMeta):
     """
     Base class for all components used by App class. It serves both: providing a common
-    interface and internal manageing functionality.
+    interface and internal managing functionality.
     """
     def __init__(self):
-        self._state_postive = dict()
+        self._state_positive = dict()
         self._state_negative = dict()
         self._states_alternate_positive = dict()
         self._states_alternate_negative = dict()
@@ -115,7 +116,7 @@ class Component:
 
     def valid_state(self, member, value, alternate=False):
         if not alternate:
-            self._state_postive[member] = value
+            self._state_positive[member] = value
         else:
             self._states_alternate_positive.update({member: value})
         return value
@@ -128,8 +129,8 @@ class Component:
         return value
 
     def is_valid(self):
-        for member in self._state_postive:
-            if self._state_postive[member] != self.__dict__[member]:
+        for member in self._state_positive:
+            if self._state_positive[member] != self.__dict__[member]:
                 return False
         for member in self._state_negative:
             if self._state_negative[member] == self.__dict__[member]:
@@ -149,3 +150,11 @@ class Component:
             if false_state == len(self._states_alternate_negative):
                 return False
         return True
+
+    @abstractmethod
+    def load_conf(self, config):
+        pass
+
+    @abstractmethod
+    def save_conf(self, config):
+        pass

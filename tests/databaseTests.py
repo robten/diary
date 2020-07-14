@@ -48,7 +48,7 @@ class TestDbManagerIntegration(unittest.TestCase):
         self.db.commit()
         self.assertIsNotNone(test1.id)
         self.assertIsNotNone(test2.id)
-        test1.title = "diverent title"
+        test1.title = "different title"
         self.db.delete(test2)
         self.db.commit()
         self.assertFalse(test2 in self.db.session)

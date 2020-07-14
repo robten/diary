@@ -87,6 +87,12 @@ class ComponentTest(unittest.TestCase):
         def test_method(self):
             pass
 
+        def load_conf(self, config):
+            pass
+
+        def save_conf(self, config):
+            pass
+
     def test_is_valid_for_invalid_state(self):
         test_obj = self.TestClass()
         test_obj.test = test_obj.invalid_state("test", None)

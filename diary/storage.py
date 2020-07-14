@@ -12,6 +12,7 @@ class FileManager(Component):
         self._db = self.invalid_state("_db", None)
         self._table_cls = self.invalid_state("_table_cls", None)
         self._root = self.invalid_state("_root", None)
+        self.section = "STORAGE"
         if all((root, db, table_cls)):
             self.initialize(root, db, table_cls)
 
@@ -122,3 +123,10 @@ class FileManager(Component):
                 self._cleanup(directory)
         if not files and not dirs:
             path.rmdir()
+
+    def load_conf(self, config):
+        self._root = config.get("location", section=self.section)
+
+    def save_conf(self, config):
+        config.set("location", self._root, section=self.section)
+

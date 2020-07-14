@@ -73,6 +73,12 @@ class ManagerBase(Component):
         """
         raise NotImplementedError()
 
+    def load_conf(self, config):
+        pass
+
+    def save_conf(self, config):
+        pass
+
 
 class INImanager(ManagerBase):
     def __init__(self, *args, **kwargs):

@@ -13,10 +13,13 @@ class DbManager(Component):
         super(DbManager, self).__init__()
         self.engine = self.invalid_state("engine", None)
         self.session = self.invalid_state("session", None)
+        self.section = "DATABASE"
+        self.credentials = dict()
 
-    def initialize(self, driver="sqlite", db=None, user=None, password=None, host=None, port=None):
-        self.engine = create_engine(URL(drivername=driver, database=db, host=host, port=port,
-                                        username=user, password=password))
+    def initialize(self, driver="sqlite", database=None, username=None, password=None,
+                   host=None, port=None):
+        self.engine = create_engine(URL(drivername=driver, database=database, host=host, port=port,
+                                        username=username, password=password))
         Model.metadata.create_all(self.engine)
         self.session = sessionmaker(bind=self.engine)()
 
@@ -50,3 +53,23 @@ class DbManager(Component):
     @Component.dependent
     def rollback(self):
         self.session.rollback()
+
+    def load_conf(self, config):
+        self.credentials["driver"] = config.get("driver", section=self.section)
+        self.credentials["database"] = config.get("database", section=self.section)
+        if self.credentials["driver"] != "sqlite":
+            self.credentials["username"] = config.get("username", section=self.section)
+            self.credentials["password"] = config.get("password", section=self.section)
+            self.credentials["host"] = config.get("host", section=self.section)
+            self.credentials["port"] = config.get("port", section=self.section)
+        self.initialize(**self.credentials)
+
+    def save_conf(self, config):
+        cr = self.credentials
+        config.set("driver", cr["driver"], section=self.section)
+        config.set("database", cr["database"], section=self.section)
+        if self.credentials["driver"] != "sqlite":
+            config.set("username", cr["username"], section=self.section)
+            config.set("password", cr["password"], section=self.section)
+            config.set("host", cr["host"], section=self.section)
+            config.set("port", cr["port"], section=self.section)
