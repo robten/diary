@@ -24,9 +24,7 @@ class App(metaclass=MetaSingleton):
         self.default_config = standard_config_dir(self.name) / "config.ini"
 
     def load_config(self, path=None):
-        if isinstance(path, Path):
-            config_path = path
-        elif isinstance(path, str):
+        if path:
             config_path = Path(path)
         else:
             config_path = self.default_config
