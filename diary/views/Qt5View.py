@@ -5,7 +5,7 @@
 from PyQt5.QtCore import QAbstractTableModel, QSortFilterProxyModel, QModelIndex, Qt, QDate,\
     pyqtSlot, QStandardPaths
 from PyQt5.QtWidgets import *
-from collections import Iterable
+from collections.abc import Iterable
 from sqlalchemy import inspect
 from datetime import date
 
